@@ -15,6 +15,8 @@
 %     subject_folder\mri\qmri
 %                             --qmri1.nii, qmri2.nii
 
+% 0. Add SPM to the MATLAB path.
+
 % 1. Load .nii reference image
 
 % 2. Load Metabolite MRSI (.SDAT or .RDA). Currently, only Transverse orientation of MRSI is supported.
