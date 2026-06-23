@@ -1,0 +1,36 @@
+## PST
+Parametric maps and Spectroscopy Tool (PST)
+Developed by the Translational Neuroimaging Study Group in Cooperative Brain Imaging Center (Co-BIC) and the Institute of Neuroradiology, Frankfurt am Main, Germany
+
+Original idea: Ulrich Pilatus 
+
+Main developer: Andrei Manzhurtsev
+
+Contributors:
+Dmitry Vronskiy (mid 2010s legacy version)
+Seyma Alcicek
+Dennis C. Thomas
+Nouha Teghlet
+Katharina J. Wenger
+
+## contact:
+manzhurtsev@med.uni-frankfurt.de
+
+## Acknowledgments
+
+This software makes use of functionality, concepts, and workflows provided by several open-source projects. We thank the developers of:
+
+- LCModel
+- SPM (Statistical Parametric Mapping)
+- Gannet
+- FID-A
+- Osprey
+
+for their contributions and continued maintenance of these widely used neuroimaging and MR spectroscopy tools.
+
+Also, authors thank the contributors of the following free softwares, which is used in PST:
+
+- mupdf 1.27
+- ps2pdf
+
+For licence details, please refer to the corresponding subfolders in the third_party folder.
