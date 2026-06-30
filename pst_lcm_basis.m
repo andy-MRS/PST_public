@@ -1,52 +1,55 @@
-function pst_lcm_basis(lcm_def_file, lcm_data_file, basis_list, b_file_idx)
+function pst_lcm_basis(lcm_def_file, lcm_data_file)
 
+basis_dir = dir("LCModel\basis-sets");
+basis_path_cell = {basis_dir(3:end).folder};
+basis_file_cell = {basis_dir(3:end).name};
+if exist(lcm_data_file,"file")
+    data = load(lcm_data_file);
+else
+    data = load(lcm_def_file);
+end
+basis_idx = data.basis_idx;
 save_def = false;
 
 %  Initialize and hide the GUI as it is being constructed
-hf = figure('Visible', 'off', 'Position', [500 450 300 300], 'Name', ...
-    'LCModel Basis Files', 'MenuBar', 'none', 'NumberTitle', 'off');
+hf = figure('Visible', 'off', 'Position', [500 450 300 300], 'Name', 'LCModel Basis Files', 'MenuBar', 'none', 'NumberTitle', 'off');
 defaultBackground = get(0, 'defaultUicontrolBackgroundColor');
 set(hf, 'Color', defaultBackground);
 
 %  Construct the components
-hprompt_text = uicontrol(hf, 'Style', 'text', 'Position', [10 270 270 20], ...
-    'String', 'Please select a LCModel basis file:', 'HorizontalAlignment',...
-    'left');
-hbasis_list = uicontrol(hf, 'Style', 'listbox', 'String', basis_list{2}, ...
-    'Position', [10 85 275 180], 'Value', b_file_idx);
-hradio_btn = uicontrol(hf, 'Style', 'radiobutton', 'String', ...
-    'Save as default', 'Value', 0, 'Position', [10 50 200 20]);
-hDef_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'Load default', ...
-    'Position', [10 10 120 30]);
-hOK_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'OK', ...
-    'Position', [140 10 60 30]);
-hCancel_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'Cancel', ...
-   'Position', [210 10 60 30]);
+hprompt_text = uicontrol(hf, 'Style', 'text', 'Position', [10 270 270 20], 'String', 'Please select a LCModel basis file:', 'HorizontalAlignment', 'left');
+hbasis_cell = uicontrol(hf, 'Style', 'listbox', 'String', basis_file_cell, 'Position', [10 85 275 180], 'Value', basis_idx);
+hradio_btn = uicontrol(hf, 'Style', 'radiobutton', 'String', 'Save as default', 'Value', 0, 'Position', [10 50 200 20]);
+hDef_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'Load default', 'Position', [10 10 120 30]);
+hOK_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'OK', 'Position', [140 10 60 30]);
+hCancel_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'Cancel', 'Position', [210 10 60 30]);
 
 %  Initialization tasks
 % Change units to normalized so components resize automatically
-set([hDef_btn hOK_btn hCancel_btn hprompt_text hbasis_list hradio_btn], ...
-    'Units', 'normalized');
+set([hDef_btn hOK_btn hCancel_btn hprompt_text hbasis_cell hradio_btn], 'Units', 'normalized');
 
 % Set the callbacks
-set(hbasis_list, 'Callback', {@basislist_callback});
+set(hbasis_cell, 'Callback', {@basislist_callback});
 set(hradio_btn, 'Callback', {@radio_btn_callback});
 set(hDef_btn, 'Callback', {@def_callback});
 set(hOK_btn, 'Callback', {@OK_callback});
 set(hCancel_btn, 'Callback', {@cancel_callback});
-set([hf hDef_btn hOK_btn hCancel_btn hbasis_list hradio_btn], ...
-    'KeyPressFcn', {@key_press});
+set([hf hDef_btn hOK_btn hCancel_btn hbasis_cell hradio_btn], 'KeyPressFcn', {@key_press});
 
 % Move the GUI to the center of the screen
 movegui(hf, 'center');
 % Make the GUI visible
 set(hf, 'Visible', 'on');
-uicontrol(hbasis_list);
+uicontrol(hbasis_cell);
 
 %  Callbacks for LCM_BASIS
 function basislist_callback(hObject, ~)
-    b_file_idx = get(hObject, 'Value');
+    basis_idx = get(hObject, 'Value');
+    data.basis_idx = basis_idx;
+    data.basis_set = [basis_path_cell{basis_idx} filesep basis_file_cell{basis_idx}];
+
 end
+
 function radio_btn_callback(hObject, ~)
     if (get(hObject, 'Value') == get(hObject, 'Max'))
         % Radio button is selected - save the values as default
@@ -61,12 +64,15 @@ function def_callback(~, ~)
     warn = 1;
     if exist(lcm_def_file, 'file') == 2
         def_data = load(lcm_def_file);
-        if isfield(def_data, 'b_file_idx')
-            b_file_idx = def_data.b_file_idx;
-            if ~isempty(b_file_idx)
-                warn = 0;
-                set(hbasis_list, 'Value', b_file_idx);
-            end
+        if isfield(def_data, 'basis_set')
+            data.basis_set = def_data.basis_set;
+            set(hbasis_cell, 'Value', def_data.basis_set);
+            warn = 0;
+        end
+        if isfield(def_data, 'basis_idx')
+            data.basis_idx = def_data.basis_idx;
+            set(hbasis_cell, 'Value', def_data.basis_idx);
+            warn = 0;
         end
     end
     if warn
@@ -75,18 +81,14 @@ function def_callback(~, ~)
 end
 
 function OK_callback(~, ~)
-    data.b_file_idx = b_file_idx;
-    if exist(lcm_data_file, 'file') ~= 2
-%         if exist('temp', 'dir') ~= 7
-%             mkdir('temp');
-%         end
+    if ~exist(lcm_data_file, 'file')
         save(lcm_data_file, '-struct', 'data');
     else
         save(lcm_data_file, '-struct', 'data', '-append');
     end
     if save_def
-        def_data.b_file_idx = b_file_idx;
-        if exist(lcm_def_file, 'file') ~= 2
+        def_data.basis_idx = basis_idx;
+        if ~exist(lcm_def_file, 'file')
             save(lcm_def_file, '-struct', 'def_data');
         else
             save(lcm_def_file, '-struct', 'def_data', '-append');

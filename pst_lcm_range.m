@@ -1,54 +1,28 @@
 function pst_lcm_range(lcm_def_file, lcm_data_file, ppmend, ppmst)
 
-%  Initialization tasks
-% if ~exist('ppmend_in', 'var') || isempty(ppmend_in)
-%     ppmend = 0.5;
-% else
-%     ppmend = ppmend_in;
-% end
-% if ~exist('ppmst_in', 'var') || isempty(ppmst_in)
-%     ppmst = 4.0;
-% else
-%     ppmst = ppmst_in;
-% end
-
 save_def = false;
 ppmend_str = sprintf('%.1f', ppmend);
 ppmst_str = sprintf('%.1f', ppmst);
-% def_data = struct([]);
 
 %  Initialize and hide the GUI as it is being constructed
-hf = figure('Visible', 'off', 'Position', [500 450 300 170], 'Name', ...
-    'LCModel Range', 'MenuBar', 'none', 'NumberTitle', 'off');
+hf = figure('Visible', 'off', 'Position', [500 450 300 170], 'Name', 'LCModel Range', 'MenuBar', 'none', 'NumberTitle', 'off');
 defaultBackground = get(0, 'defaultUicontrolBackgroundColor');
 set(hf, 'Color', defaultBackground);
 
 %  Construct the components
-hprompt_text = uicontrol(hf, 'Style', 'text', 'Position', [10 140 290 20], ...
-    'String', 'Please enter LCModel ppm range parameters:', ...
-    'HorizontalAlignment', 'left');
-hppmend_text = uicontrol(hf, 'Style', 'text', 'String', 'ppmend:', ...
-    'Position', [60 110 70 20], 'HorizontalAlignment', 'left');
-hppmend_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', ...
-    'Position', [120 115 70 20], 'String', ppmend_str);
-hppmst_text = uicontrol(hf, 'Style', 'text', 'String', 'ppmst:', ...
-    'Position', [60 80 70 20], 'HorizontalAlignment', 'left');
-hppmst_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', ...
-    'Position', [120 85 70 20], 'String', ppmst_str);
-hradio_btn = uicontrol(hf, 'Style', 'radiobutton', 'String', ...
-    'Save as default', 'Value', 0, 'Position', [10 50 200 20]);
-hDef_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'Load default', ...
-    'Position', [10 10 120 30]);
-hOK_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'OK', ...
-    'Position', [150 10 60 30]);
-hCancel_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'Cancel', ...
-   'Position', [230 10 60 30]);
+hprompt_text = uicontrol(hf, 'Style', 'text', 'Position', [10 140 290 20], 'String', 'Please enter LCModel ppm range parameters:', 'HorizontalAlignment', 'left');
+hppmend_text = uicontrol(hf, 'Style', 'text', 'String', 'ppmend:', 'Position', [60 110 70 20], 'HorizontalAlignment', 'left');
+hppmend_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', 'Position', [120 115 70 20], 'String', ppmend_str);
+hppmst_text = uicontrol(hf, 'Style', 'text', 'String', 'ppmst:', 'Position', [60 80 70 20], 'HorizontalAlignment', 'left');
+hppmst_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', 'Position', [120 85 70 20], 'String', ppmst_str);
+hradio_btn = uicontrol(hf, 'Style', 'radiobutton', 'String', 'Save as default', 'Value', 0, 'Position', [10 50 200 20]);
+hDef_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'Load default', 'Position', [10 10 120 30]);
+hOK_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'OK', 'Position', [150 10 60 30]);
+hCancel_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'Cancel', 'Position', [230 10 60 30]);
 
 %  Initialization tasks
 % Change units to normalized so components resize automatically
-set([hDef_btn hOK_btn hCancel_btn hppmst_text hppmst_edit hppmend_text ...
-    hppmend_edit hprompt_text hradio_btn], 'Units', 'normalized');%, 'FontUnits', 'normalized', ...
-    %'FontSize', 0.5);
+set([hDef_btn hOK_btn hCancel_btn hppmst_text hppmst_edit hppmend_text hppmend_edit hprompt_text hradio_btn], 'Units', 'normalized');
 
 % Set the callbacks
 set([hppmst_edit hppmend_edit], 'Callback', {@edittext_callback});
@@ -56,8 +30,7 @@ set(hradio_btn, 'Callback', {@radio_btn_callback});
 set(hDef_btn, 'Callback', {@def_callback});
 set(hOK_btn, 'Callback', {@OK_callback});
 set(hCancel_btn, 'Callback', {@cancel_callback});
-set([hf hppmst_edit hppmend_edit hradio_btn hDef_btn hOK_btn hCancel_btn], ...
-    'KeyPressFcn', {@key_press});
+set([hf hppmst_edit hppmend_edit hradio_btn hDef_btn hOK_btn hCancel_btn], 'KeyPressFcn', {@key_press});
 
 % Move the GUI to the center of the screen
 movegui(hf, 'center');
@@ -79,7 +52,6 @@ end
 
 function radio_btn_callback(hObject, ~)
     if (get(hObject, 'Value') == get(hObject, 'Max'))
-        % Radio button is selected - save the values as default
         save_def = true;
     else
         save_def = false;
@@ -113,9 +85,6 @@ function OK_callback(~, ~)
     data.ppmend = ppmend;
     data.ppmst = ppmst;
     if exist(lcm_data_file, 'file') ~= 2
-%         if exist('temp', 'dir') ~= 7
-%             mkdir('temp');
-%         end
         save(lcm_data_file, '-struct', 'data');
     else
         save(lcm_data_file, '-struct', 'data', '-append');
@@ -140,17 +109,6 @@ function key_press(hObject, eventdata)
     key = eventdata.Key;
     if strcmpi(key, 'return')
         switch hObject
-%             case hradio_btn
-%                 val = get(hObject, 'Value');
-%                 max = get(hObject, 'Max');
-%                 min = get(hObject, 'Min');
-%                 if (val == max)
-%                     set(hObject, 'Value', min);
-%                     save_def = false;
-%                 else
-%                     set(hObject, 'Value', max);
-%                     save_def = true;
-%                 end
             case hDef_btn
                 def_callback;
             case hCancel_btn
