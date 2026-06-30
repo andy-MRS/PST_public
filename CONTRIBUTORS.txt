@@ -2,6 +2,9 @@
 Parametric maps and Spectroscopy Tool (PST)
 Developed by the Translational Neuroimaging Study Group in Cooperative Brain Imaging Center (Co-BIC) and the Institute of Neuroradiology, Frankfurt am Main, Germany
 
+## contact:
+manzhurtsev@med.uni-frankfurt.de
+
 Original idea: Ulrich Pilatus 
 
 Main developer: Andrei Manzhurtsev
@@ -12,9 +15,6 @@ Seyma Alcicek
 Dennis C. Thomas
 Nouha Teghlet
 Katharina J. Wenger
-
-## contact:
-manzhurtsev@med.uni-frankfurt.de
 
 ## Acknowledgments
 

@@ -36,6 +36,10 @@ function spec_struct = pst_load_spec(spec, water, ref_file, is_sv, Manufacturer)
         end
     end
     
+    % rename vendor to Manufacturer
+    spec_struct.Manufacturer = Manufacturer;
+    spec_struct = rmfield(spec_struct,'vendor');
+
     % is it a volume selection technique?
     disp("Checking if it is a volume selection MRSI technique in pst_load_spec (line 36)");
     if ~is_sv

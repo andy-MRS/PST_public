@@ -1,4 +1,4 @@
-function ctrl_name = pst_make_ctrl_file(spec_struct, defdir, basis_file, icolst, irowst, select_name, raw_name, raw_name_water, lcm_data_file)
+function ctrl_name = pst_make_ctrl_file(spec_struct, basis_set, icolst, irowst, select_name, raw_name, raw_name_water, lcm_data_file)
 
 [path, name] = fileparts(spec_struct.spec_file);
 if isempty(select_name)
@@ -9,11 +9,11 @@ end
 
 col_str = num2str(icolst);
 row_str = num2str(irowst);
-ps_name = fullfile(path, 'lcm', [new_name '.ps']);
-table_name = fullfile(path, 'lcm', [new_name '.table']);
+ps_name = fullfile(path, 'lcm', [new_name '_' row_str '-' col_str '.ps']);
+table_name = fullfile(path, 'lcm', [new_name '_' row_str '-' col_str '.table']);
 csv_name = fullfile(path, 'lcm', [new_name '_' row_str '-' col_str '.csv']);
 print_name = fullfile(path, 'lcm', [new_name '_' row_str '-' col_str '.print']);
-coord_name = fullfile(path, 'lcm', [new_name '.coord']);
+coord_name = fullfile(path, 'lcm', [new_name '_' row_str '-' col_str '.coord']);
 ctrl_name = fullfile(path, 'lcm', [name '_' row_str '-' col_str '.control']);
 hzpppm = spec_struct.txfrq/10^6;
 nunfil = spec_struct.samples;
@@ -37,12 +37,13 @@ fid = fopen(ctrl_name, 'w');
 data = load(lcm_data_file);
 lcm_str = sprintf(' %s\n', '$LCMODL');
 
-title = sprintf(' %s''%s''\n', 'title = ', select_name);
+title_tmp = [select_name ' row ' row_str ' col ' col_str];
+title = sprintf(' %s''%s''\n', 'title = ', title_tmp);
 if ispc
-    filbas_str = sprintf(' %s''%s''\n', 'filbas = ', [defdir filesep 'LCModel' filesep 'basis-sets' filesep basis_file]);
+    filbas_str = sprintf(' %s''%s''\n', 'filbas = ', basis_set);
 elseif isunix
     [~, home] = system('echo -n $HOME');
-    filbas_str = sprintf(' %s''%s''\n', 'filbas = ', [home filesep '.lcmodel' filesep 'basis-sets' filesep basis_file]);
+    filbas_str = sprintf(' %s''%s''\n', 'filbas = ', basis_set);
 end
 filraw_str = sprintf(' %s''%s''\n', 'filraw = ', raw_name);
 if ~isempty(raw_name_water) 

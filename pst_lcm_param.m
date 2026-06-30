@@ -1,31 +1,6 @@
 function pst_lcm_param(lcm_def_file, lcm_data_file, degzer, sddegz, degppm, sddegp, dkntmn, neach, nsimul, VITRO)
 
 %  Initialization tasks
-% if ~exist('degzer_in', 'var') || isempty(degzer_in)
-%     degzer = 164;
-% else
-%     degzer = degzer_in;
-% end
-% if ~exist('sddegz_in', 'var') || isempty(sddegz_in)
-%     sddegz = 10;
-% else
-%     sddegz = sddegz_in;
-% end
-% if ~exist('degppm_in', 'var') || isempty(degppm_in)
-%     degppm = 0;
-% else
-%     degppm = degppm_in;
-% end
-% if ~exist('sddegp_in', 'var') || isempty(sddegp_in)
-%     sddegp = 1;
-% else
-%     sddegp = sddegp_in;
-% end
-
-% sddegp_in = sddegp;
-% degppm_in = degppm;
-% sddegz_in = sddegz;
-% degzer_in = degzer;
 degzer_str = num2str(degzer);
 sddegz_str = num2str(sddegz);
 degppm_str = num2str(degppm);
@@ -34,7 +9,6 @@ dkntmn_str = num2str(dkntmn);
 neach_str = num2str(neach);
 nsimul_str = num2str(nsimul);
 save_def = false;
-% Initialize VITRO 
 %  Initialize and hide the GUI as it is being constructed
 hf = figure('Visible', 'off', 'Position', [500 480 280 320], 'Name', ...
     'LCModel Parameters', 'MenuBar', 'none', 'NumberTitle', 'off');
@@ -42,52 +16,29 @@ defaultBackground = get(0, 'defaultUicontrolBackgroundColor');
 set(hf, 'Color', defaultBackground);
 
 %  Construct the components
-% TODO: Add 'Set as default'-button to save the default values in a
-% permanant file in defdir (path as input) v
 
-hneach_text = uicontrol(hf, 'Style', 'text', 'String', 'NEACH: ', ...
-    'Position', [50 290 70 20], 'HorizontalAlignment', 'left');
-hneach_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', ...
-    'Position', [110 295 70 20], 'String', neach_str);
-hdegzer_text = uicontrol(hf, 'Style', 'text', 'String', 'DEGZER:', ...
-    'Position', [50 260 70 20], 'HorizontalAlignment', 'left');
-hdegzer_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', ...
-    'Position', [110 265 70 20], 'String', degzer_str);
-hsddegz_text = uicontrol(hf, 'Style', 'text', 'String', 'SDDEGZ:', ...
-    'Position', [50 230 70 20], 'HorizontalAlignment', 'left');
-hsddegz_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', ...
-    'Position', [110 235 70 20], 'String', sddegz_str);
-hdegppm_text = uicontrol(hf, 'Style', 'text', 'String', 'DEGPPM:', ...
-    'Position', [50 200 70 20], 'HorizontalAlignment', 'left');
-hdegppm_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', ...
-    'Position', [110 205 70 20], 'String', degppm_str);
-hsddegp_text = uicontrol(hf, 'Style', 'text', 'String', 'SDDEGP:', ...
-   'Position', [50 170 70 20], 'HorizontalAlignment', 'left');
-hsddegp_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', ...
-    'Position', [110 175 70 20], 'String', sddegp_str);
-hdkntmn_text = uicontrol(hf, 'Style', 'text', 'String', 'DKNTMN: ', ...
-   'Position', [50 140 70 20], 'HorizontalAlignment', 'left');
-hdkntmn_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', ...
-    'Position', [110 145 70 20], 'String', dkntmn_str);
-hnsimul_text = uicontrol(hf, 'Style', 'text', 'String', 'NSIMUL: ', ...
-   'Position', [50 110 70 20], 'HorizontalAlignment', 'left');
-hnsimul_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', ...
-    'Position', [110 115 70 20], 'String', nsimul_str);
-%VITRO
-hvitro_text = uicontrol(hf, 'Style', 'text', 'String', 'VITRO:', ...
-    'Position', [50 80 70 20], 'HorizontalAlignment', 'left');
-hvitro_popup = uicontrol(hf, 'Style', 'popupmenu', 'String', {'F', 'T'}, ...
-    'Position', [110 85 70 20], 'Value', 1, ...  % Default 'F' selected
-    'Callback', @vitro_popup_callback);
 
-hradio_btn = uicontrol(hf, 'Style', 'radiobutton', 'String', ...
-    'Save as default', 'Value', 0, 'Position', [10 50 200 20]);
-hDef_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'Load default', ...
-    'Position', [10 10 120 30]);
-hOK_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'OK', ...
-    'Position', [140 10 60 30]);
-hCancel_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'Cancel', ...
-   'Position', [210 10 60 30]);
+hneach_text = uicontrol(hf, 'Style', 'text', 'String', 'NEACH: ', 'Position', [50 290 70 20], 'HorizontalAlignment', 'left');
+hneach_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', 'Position', [110 295 70 20], 'String', neach_str);
+hdegzer_text = uicontrol(hf, 'Style', 'text', 'String', 'DEGZER:', 'Position', [50 260 70 20], 'HorizontalAlignment', 'left');
+hdegzer_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', 'Position', [110 265 70 20], 'String', degzer_str);
+hsddegz_text = uicontrol(hf, 'Style', 'text', 'String', 'SDDEGZ:', 'Position', [50 230 70 20], 'HorizontalAlignment', 'left');
+hsddegz_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', 'Position', [110 235 70 20], 'String', sddegz_str);
+hdegppm_text = uicontrol(hf, 'Style', 'text', 'String', 'DEGPPM:', 'Position', [50 200 70 20], 'HorizontalAlignment', 'left');
+hdegppm_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', 'Position', [110 205 70 20], 'String', degppm_str);
+hsddegp_text = uicontrol(hf, 'Style', 'text', 'String', 'SDDEGP:', 'Position', [50 170 70 20], 'HorizontalAlignment', 'left');
+hsddegp_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', 'Position', [110 175 70 20], 'String', sddegp_str);
+hdkntmn_text = uicontrol(hf, 'Style', 'text', 'String', 'DKNTMN: ', 'Position', [50 140 70 20], 'HorizontalAlignment', 'left');
+hdkntmn_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', 'Position', [110 145 70 20], 'String', dkntmn_str);
+hnsimul_text = uicontrol(hf, 'Style', 'text', 'String', 'NSIMUL: ', 'Position', [50 110 70 20], 'HorizontalAlignment', 'left');
+hnsimul_edit = uicontrol(hf, 'Style', 'edit', 'HorizontalAlignment', 'right', 'Position', [110 115 70 20], 'String', nsimul_str);
+hvitro_text = uicontrol(hf, 'Style', 'text', 'String', 'VITRO:', 'Position', [50 80 70 20], 'HorizontalAlignment', 'left');
+hvitro_popup = uicontrol(hf, 'Style', 'popupmenu', 'String', {'F', 'T'}, 'Position', [110 85 70 20], 'Value', 1, 'Callback', @vitro_popup_callback);
+
+hradio_btn = uicontrol(hf, 'Style', 'radiobutton', 'String', 'Save as default', 'Value', 0, 'Position', [10 50 200 20]);
+hDef_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'Load default', 'Position', [10 10 120 30]);
+hOK_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'OK', 'Position', [140 10 60 30]);
+hCancel_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'Cancel', 'Position', [210 10 60 30]);
 
 %  Initialization tasks
 % Change units to normalized so components resize automatically
@@ -97,8 +48,7 @@ set([hDef_btn hOK_btn hCancel_btn hsddegp_text hsddegp_edit hdegppm_text ...
     );
 
 % Set the callbacks
-set([hdkntmn_edit hsddegp_edit hdegppm_edit hsddegz_edit hdegzer_edit hnsimul_edit], 'Callback', ...
-    {@edittext_callback});
+set([hdkntmn_edit hsddegp_edit hdegppm_edit hsddegz_edit hdegzer_edit hnsimul_edit], 'Callback', {@edittext_callback});
 set(hradio_btn, 'Callback', {@radio_btn_callback});
 set(hDef_btn, 'Callback', {@def_callback});
 set(hOK_btn, 'Callback', {@OK_callback});
@@ -223,11 +173,6 @@ function OK_callback(~, ~)
     data.nsimul = nsimul;
     data.VITRO = VITRO;
     if exist(lcm_data_file, 'file') ~= 2
-        % make temprorary directory to save a temporary file with phasing
-        % parameters
-%         if exist('temp', 'dir') ~= 7
-%             mkdir('temp');
-%         end
         save(lcm_data_file, '-struct', 'data');
     else
         save(lcm_data_file, '-struct', 'data', '-append');
@@ -258,17 +203,6 @@ function key_press(hObject, eventdata)
     key = eventdata.Key;
     if strcmpi(key, 'return')
         switch hObject
-%             case hradio_btn
-%                 val = get(hObject, 'Value');
-%                 max = get(hObject, 'Max');
-%                 min = get(hObject, 'Min');
-%                 if (val == max)
-%                     set(hObject, 'Value', min);
-%                     save_def = false;
-%                 else
-%                     set(hObject, 'Value', max);
-%                     save_def = true;
-%                 end
             case hDef_btn
                 def_callback;
             case hCancel_btn
