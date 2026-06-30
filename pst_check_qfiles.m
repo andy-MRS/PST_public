@@ -1,5 +1,6 @@
 function [q, filenames, names] = pst_check_qfiles(file_name)
-    
+
+    names = {};
     filenames = {};
     [path, ~, ~] = fileparts(file_name);
     qmri_folder_names_dictionary = {'qMRI', 'qmri', 'QMRI'};
