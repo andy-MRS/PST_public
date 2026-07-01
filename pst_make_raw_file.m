@@ -26,7 +26,11 @@ function create_raw(spec_struct, raw_name)
     
     echot = spec_struct.te;
     hzpppm = spec_struct.txfrq/10^6;
-    volume = prod(spec_struct.geometry.vox_sz) * 10^-3;
+    if ~spec_struct.is_sv
+        volume = prod(spec_struct.geometry.vox_sz) * 10^-3;
+    else
+        volume = prod(spec_struct.geometry.VOI_size) * 10^-3;
+    end
     fid = fopen(raw_name, 'w');
     % make namelist SEQPAR
     seq_str = sprintf(' %s\n', '$SEQPAR');

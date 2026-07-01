@@ -621,7 +621,6 @@ function spec_browse(~, ~)
     cd(defdir);
     if ~isempty(spec_file)
         [is_sv, Manufacturer] = pst_get_is_sv_and_vendor(spec_file);
-        spec_struct.Manufacturer = Manufacturer;
     else
         warning("MRS file is empty")
     end
@@ -748,10 +747,14 @@ function load_data(~, ~)
 
     if ~is_sv
         set(hSelect_btn, 'Enable', 'on');
+        set(hReuseSel_btn, 'Enable', 'on');
         set(hDeleteSelection_btn, 'Enable', 'on');
+        set(hDeleteAll_btn, 'Enable', 'on');
     else
         set(hSelect_btn, 'Enable', 'off');
+        set(hReuseSel_btn, 'Enable', 'off');
         set(hDeleteSelection_btn, 'Enable', 'off');
+        set(hDeleteAll_btn, 'Enable', 'off');
     end
     
     % reactivate the button
@@ -2222,17 +2225,29 @@ function mouse_click(~, ~)
             if ~isfolder([spec_path filesep 'lcm_png'])
                 mkdir([spec_path filesep 'lcm_png']);
             end
-            output_pattern = fullfile(spec_path, 'lcm_png', sprintf('%d_%d', cur_y_spec, cur_x_spec), [pdf_name '_page%02d.png']);
-            if ~isfolder([spec_path filesep 'lcm_png' filesep sprintf('%d_%d', cur_y_spec, cur_x_spec)])
-                mkdir([spec_path filesep 'lcm_png' filesep sprintf('%d_%d', cur_y_spec, cur_x_spec)]);
+            if ~is_sv
+                output_pattern = fullfile(spec_path, 'lcm_png', sprintf('%d_%d', cur_y_spec, cur_x_spec), [pdf_name '_page%02d.png']);
+                if ~isfolder([spec_path filesep 'lcm_png' filesep sprintf('%d_%d', cur_y_spec, cur_x_spec)])
+                    mkdir([spec_path filesep 'lcm_png' filesep sprintf('%d_%d', cur_y_spec, cur_x_spec)]);
+                end
+            else
+                output_pattern = fullfile(spec_path, 'lcm_png', [pdf_name '_page%02d.png']);
+                if ~isfolder([spec_path, 'lcm_png'])
+                    mkdir([spec_path, 'lcm_png']);
+                end
             end
+
             convert_PDF_PNG_cmd = sprintf('"third_party\\mupdf-1.27.0-windows\\mutool.exe" draw -r 150 -A 8 -o "%s" "%s"', output_pattern, input_pdf);
             [code, message] = system(convert_PDF_PNG_cmd);
             if code ~= 0
                 disp(message);
                 return
             end
-            folder = fullfile(spec_path, 'lcm_png', sprintf('%d_%d', cur_y_spec, cur_x_spec));
+            if ~is_sv
+                folder = fullfile(spec_path, 'lcm_png', sprintf('%d_%d', cur_y_spec, cur_x_spec));
+            else
+                folder = fullfile(spec_path, 'lcm_png');
+            end
             fig = ancestor(hAxes2, 'figure');
             set(hAxes2, 'Clipping', 'on')
             setupViewer(fig, hAxes2, folder);
@@ -2247,14 +2262,15 @@ function mouse_click(~, ~)
             pst_system_LD_clean(open_cmd);
         end
         
-        if ~exist('hMarker','var') || isempty(hMarker) || ~isgraphics(hMarker)
-            hold(hAxes,'on')
-            hMarker = line(hAxes, cur_x, cur_y,'Marker','x', 'Color','r', 'LineStyle','none', 'LineWidth',1, 'MarkerSize',10);
-            hold(hAxes,'off')
-        else
-            set(hMarker, 'XData', cur_x, 'YData', cur_y);
+        if ~is_sv
+            if ~exist('hMarker','var') || isempty(hMarker) || ~isgraphics(hMarker)
+                hold(hAxes,'on')
+                    hMarker = line(hAxes, cur_x, cur_y,'Marker','x', 'Color','r', 'LineStyle','none', 'LineWidth',1, 'MarkerSize',10);
+                hold(hAxes,'off')
+            else
+                set(hMarker, 'XData', cur_x, 'YData', cur_y);
+            end
         end
-
         spectra_pts = [spectra_pts; cur_x cur_y];
     else
 
@@ -2493,6 +2509,10 @@ function draw_FOV(geometry)
 end
 
 function draw_VOI(ppmShift)
+    
+    if lcm_spec
+        set([hAxes; get(hAxes, 'Children')], 'ButtonDownFcn', @mouse_click);
+    end
 
     shift_val_str = pst_get_shift_value_string(ppmShift);
     current_structure = spec_struct.(['shifted_' shift_val_str]);

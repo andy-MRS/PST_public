@@ -182,16 +182,26 @@ function [out] = pst_loadspec_rda(filename)
         geometry.rot.NormTra        = rda.SlabOrientation(1,3); % Transversal component of normal vector of voxel
     
         % FoV case
-        geometry.si_size.VoI_RoFOV = rda.FoVWidth;
-        geometry.si_size.VoI_PeFOV = rda.FoVHeight;
-        geometry.si_size.VoIThickness = rda.FoV3D;
+        if isfield(rda,'FoVWidth')
+            geometry.si_size.VoI_RoFOV = rda.FoVWidth;
+            geometry.si_size.VoI_PeFOV = rda.FoVHeight;
+            geometry.si_size.VoIThickness = rda.FoV3D;
 
-        % matrix size
-        out.nXvoxels = rda.CSIMatrix_Size(1);
-        out.nYvoxels = rda.CSIMatrix_Size(2);
-        
-        % spectroscopic voxel size
-        geometry.vox_sz = [rda.PixelSpacingRow, rda.PixelSpacingCol, rda.PixelSpacing3D];
+            % matrix size
+            out.nXvoxels = rda.CSIMatrix_Size(1);
+            out.nYvoxels = rda.CSIMatrix_Size(2);
+            out.nZvoxels = rda.CSIMatrix_Size(3);
+            
+            % spectroscopic voxel size
+            geometry.vox_sz = [rda.PixelSpacingRow, rda.PixelSpacingCol, rda.PixelSpacing3D];
+        else
+            out.nXvoxels = 1;
+            out.nYvoxels = 1;
+            out.nZvoxels = 1;
+
+            geometry.vox_sz = rda.SlabThickness;
+
+        end
 
         %Calculate InPlaneRot (HR), adapted from coreg_siemens.m; still in
         %DICOM coordinates

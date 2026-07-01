@@ -179,7 +179,9 @@ if isfield(header, 'nr_of_slices_for_multislice') && isfield(header, 'dim2_pnts'
     out.nZvoxels = header.nr_of_slices_for_multislice;
     out.flags.MultiVoxel=1;
 end
-if isfield(header, 'dim2_pnts') || isfield(header, 'dim3_pnts') % no Acq matrix in SPAR :( But it's needed for PSF correction
+if isfield(header, 'phase_encoding_fov')
+
+    % no Acq matrix in SPAR :( But it's needed for PSF correction
     prompt = {'X:','Y:'};
     dlgtitle = 'Enter acquisition matrix (X x Y)';
     window_size = [1 60];
@@ -187,13 +189,10 @@ if isfield(header, 'dim2_pnts') || isfield(header, 'dim3_pnts') % no Acq matrix 
     answer = inputdlg(prompt, dlgtitle, window_size, definput);
     out.nAcqXvoxels = str2double(answer{1});
     out.nAcqYvoxels = str2double(answer{2});
-end
-if isfield(header, 'phase_encoding_fov')
     out.PE_FoV = header.phase_encoding_fov;
     out.flags.MultiVoxel=1;
     
     % this now addresses only the Tra orientation of MRSI. Other orientations to be addressed later
-    
     % Find FOV geometry                         
 
     geometry.si_size.lr = header.phase_encoding_fov;
@@ -264,7 +263,7 @@ if dims.extras > 0 % Is a series
 end
 % Add info for niiwrite
 out.PatientPosition = strrep([header.patient_position ' ' header.patient_orientation],'"','');
-out.vendor = 'Philips';
+out.Manufacturer = 'Philips';
 [~,filename,ext] = fileparts(filename);
 out.OriginalFile = [filename ext];
 % Sequence flags
