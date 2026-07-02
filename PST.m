@@ -52,9 +52,7 @@ dkntmn = 0.15;
 neach = 99;
 nsimul = 13;
 lcm_print = true;
-% basis_list = {};
 basis_idx = 1;
-% basis_file = '';
 lcm_spec = true;
 ppmend = 0.5;
 ppmst = 4.0;
@@ -80,6 +78,8 @@ image_name = [];
 sel_names = {};
 sel_names_struct = struct;
 sel_file_is_old = true;
+hMarker = [];
+hMarker2 = [];
 
 %% Initialize GUI
 hf = figure('Position', [0 0 750 750], 'Name', 'PST', 'CloseRequestFcn', @my_close, 'MenuBar', 'none');
@@ -142,7 +142,6 @@ col_vis = 80;
 row_vis = 110;
 
 % position the axes
-posit = get(hf,'Position');
 hAxes = axes('Units', 'pixels', 'Visible', 'off', 'Position', [col_vis+40 100 200 200]);
 hf.UserData.LR_flipped = true;
 hf.UserData.AP_flipped = true;
@@ -154,7 +153,6 @@ hf.UserData.initialAxesState.YDir = 'reverse';
 set([hAxes; get(hAxes,'Children')], 'ButtonDownFcn', @mouse_click);
 
 % position the axes
-posit = get(hf,'Position');
 hAxes2 = axes('Units', 'pixels', 'Visible', 'off', 'Position', [3*(col_vis+40) 100 200 200]);
 axis(hAxes2,'off')
 
@@ -838,7 +836,6 @@ function width_edit(hObject, ~)
     num = str2double(str);
     if num>0
         width_factor = num;
-        posit = get(hf,'Position');
         set(hAxes, 'Units', 'normalized', 'Position', [0.26 0.17 0.25*magn_factor*width_factor 0.45*magn_factor]);
     else
         errordlg('The magnification factor must be positive!');
@@ -859,7 +856,6 @@ function width_arrow(direction)
     width_factor = width_factor + direction*width_step;
     width_factor = max(0.1, min(7, width_factor));
     set(hWidthEdit, 'String', sprintf('%1.1f', width_factor));
-    posit = get(hf,'Position');
     set(hAxes, 'Units', 'normalized', 'Position', [0.26 0.17 0.25*magn_factor*width_factor 0.45*magn_factor]);
     if ~is_sv
         draw_FOV(spec_struct.geometry);
@@ -874,7 +870,6 @@ function magn_edit(hObject, ~)
     num = str2double(str);
     if num>0
         magn_factor = num;
-        posit = get(hf,'Position');
         set(hAxes, 'Units', 'normalized', 'Position', [0.26 0.17 0.25*magn_factor*width_factor 0.45*magn_factor]);
     else
         errordlg('The magnification factor must be positive!');
@@ -895,7 +890,6 @@ function magn_arrow(direction)
     magn_factor = magn_factor + direction*magn_step;
     magn_factor = max(0.1, min(7, magn_factor));
     set(hMagnEdit, 'String', sprintf('%1.1f', magn_factor));
-    posit = get(hf,'Position');
     set(hAxes, 'Units', 'normalized', 'Position', [0.26 0.17 0.25*magn_factor*width_factor 0.45*magn_factor]);
     if ~is_sv
         draw_FOV(spec_struct.geometry);
@@ -1352,10 +1346,11 @@ function process_CSD(varargin)
         pause(0.01);
     
         load_csd_parameters;
-    
-        for i=1:length(ppmShifts)
-            shifted_structs(i) = spec_struct;
-        end
+
+        shifted_structs(1:length(ppmShifts)) = spec_struct;        
+        % for i=1:length(ppmShifts)
+        %     shifted_structs(i) = spec_struct;
+        % end
         for i = 1:length(ppmShifts) 
         
             fprintf('\n%s%s%s\n', 'Processing shifted geometry, delta = ', num2str(ppmShifts(i)), '...');
@@ -1876,7 +1871,7 @@ function process_lcmodel(~, ~)
         return
     end
 
-    copyfile([curdir 'lcm' filesep 'ps2pdf' filesep 'files'], [curdir 'lcm_pdf']);
+    copyfile([curdir 'lcm' filesep 'ps2pdf' filesep 'files'], [curdir filesep 'lcm' filesep 'lcm_pdf']);
     cd('..'); %go to lcm
     rmdir('ps2pdf', 's');
     cd(defdir)
@@ -1922,6 +1917,8 @@ function process_composition(~, ~)
         sel_names_struct.('vox1_1') = 'SV';
     end
 
+
+    vox_ids = cell(length(ppmShifts_with_0), 1);
     for i=1:length(ppmShifts_with_0)
         
         shift_val_str = pst_get_shift_value_string(ppmShifts_with_0(i));
@@ -2168,7 +2165,6 @@ function visual_out(delta_ppm)
     hAxes.YColor = 'none';
     hAxes.XTick  = [];
     hAxes.YTick  = [];
-    posit = get(hf,'Position');
     set(hAxes, 'Units', 'normalized', 'Position', [0.26 0.17 0.25*magn_factor*width_factor 0.45*magn_factor], 'Visible', 'on');
 
     if ~is_sv 
@@ -2214,26 +2210,26 @@ function mouse_click(~, ~)
     end
 
     spec_path = fileparts(spec_file);
-    pdf_files = dir(fullfile(spec_path, 'lcm_pdf', file_ptrn));
+    pdf_files = dir(fullfile(spec_path, 'lcm', 'lcm_pdf', file_ptrn));
     delete(anno);
     if ~isempty(pdf_files)
         pdf_file = pdf_files(1).name;
         if ispc
             cd(defdir)
-            input_pdf = fullfile(spec_path, 'lcm_pdf', pdf_file);
+            input_pdf = fullfile(spec_path, 'lcm', 'lcm_pdf', pdf_file);
             [~, pdf_name] = fileparts(pdf_file);
-            if ~isfolder([spec_path filesep 'lcm_png'])
-                mkdir([spec_path filesep 'lcm_png']);
+            if ~isfolder([spec_path filesep 'lcm' filesep 'lcm_png'])
+                mkdir([spec_path filesep 'lcm' filesep 'lcm_png']);
             end
             if ~is_sv
-                output_pattern = fullfile(spec_path, 'lcm_png', sprintf('%d_%d', cur_y_spec, cur_x_spec), [pdf_name '_page%02d.png']);
-                if ~isfolder([spec_path filesep 'lcm_png' filesep sprintf('%d_%d', cur_y_spec, cur_x_spec)])
-                    mkdir([spec_path filesep 'lcm_png' filesep sprintf('%d_%d', cur_y_spec, cur_x_spec)]);
+                output_pattern = fullfile(spec_path, 'lcm', 'lcm_png', sprintf('%d_%d', cur_y_spec, cur_x_spec), [pdf_name '_page%02d.png']);
+                if ~isfolder([spec_path filesep 'lcm' filesep 'lcm_png' filesep sprintf('%d_%d', cur_y_spec, cur_x_spec)])
+                    mkdir([spec_path filesep 'lcm' filesep 'lcm_png' filesep sprintf('%d_%d', cur_y_spec, cur_x_spec)]);
                 end
             else
-                output_pattern = fullfile(spec_path, 'lcm_png', [pdf_name '_page%02d.png']);
-                if ~isfolder([spec_path, 'lcm_png'])
-                    mkdir([spec_path, 'lcm_png']);
+                output_pattern = fullfile(spec_path, 'lcm', 'lcm_png', [pdf_name '_page%02d.png']);
+                if ~isfolder([spec_path, filesep 'lcm' filesep 'lcm_png'])
+                    mkdir([spec_path, filesep 'lcm' filesep 'lcm_png']);
                 end
             end
 
@@ -2244,9 +2240,9 @@ function mouse_click(~, ~)
                 return
             end
             if ~is_sv
-                folder = fullfile(spec_path, 'lcm_png', sprintf('%d_%d', cur_y_spec, cur_x_spec));
+                folder = fullfile(spec_path, 'lcm', 'lcm_png', sprintf('%d_%d', cur_y_spec, cur_x_spec));
             else
-                folder = fullfile(spec_path, 'lcm_png');
+                folder = fullfile(spec_path, 'lcm', 'lcm_png');
             end
             fig = ancestor(hAxes2, 'figure');
             set(hAxes2, 'Clipping', 'on')
@@ -2265,16 +2261,18 @@ function mouse_click(~, ~)
         if ~is_sv
             if ~exist('hMarker','var') || isempty(hMarker) || ~isgraphics(hMarker)
                 hold(hAxes,'on')
-                    hMarker = line(hAxes, cur_x, cur_y,'Marker','x', 'Color','r', 'LineStyle','none', 'LineWidth',1, 'MarkerSize',10);
+                hMarker = line(hAxes, cur_x, cur_y,'Marker','x', 'Color','r', 'LineStyle','none', 'LineWidth', 1, 'MarkerSize', 6, 'HitTest','off', 'PickableParts','none');
                 hold(hAxes,'off')
             else
-                set(hMarker, 'XData', cur_x, 'YData', cur_y);
+                hMarker2 = line(hAxes, cur_x, cur_y,'Marker','x', 'Color','r', 'LineStyle','none', 'LineWidth', 1, 'MarkerSize', 6, 'HitTest','off', 'PickableParts','none');
+                set(hMarker, 'Color', 'g');
+                hMarker = hMarker2;
             end
         end
         spectra_pts = [spectra_pts; cur_x cur_y];
     else
 
-        anno = annotation('textbox', [0.52 0.655 0.70 0.08], 'units', 'normalized', 'String', ('This voxel was not processed in LCModel'), 'FitBoxToText', 'on', 'FontSize', 20, 'FontWeight','normal', 'HitTest','off');
+        anno = annotation('textbox', [0.52 0.655 0.70 0.08], 'units', 'normalized', 'String', ('This voxel was not processed in LCModel'), 'FitBoxToText', 'on', 'FontSize', 20, 'FontWeight','normal', 'HitTest','off', 'PickableParts','none');
     end
     
     
