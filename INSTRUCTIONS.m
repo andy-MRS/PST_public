@@ -25,7 +25,7 @@
 
 % 4. Click 'Load data'
 
-% 5. Select voxels by drawing a rectangular. You can define several selections one after another with different names.
+% 5. Select voxels by drawing a rectangular using the crosshair and double-clicking on it. You can define several selections one after another with different names.
 
 % 6. Prior to clicking 'LCModel', set up parameters in the LCModel tab of
 % the main menu. Put your basis set(s) into LCModel\basis-sets folder and
