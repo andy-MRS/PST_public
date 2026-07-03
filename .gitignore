@@ -1,3 +1,5 @@
 LCModel/LCModel.exe
 LCModel/lcm_data.mat
 *.asv
+example_data/*
+!example_data/*.zip
