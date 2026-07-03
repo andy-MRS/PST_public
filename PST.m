@@ -760,6 +760,11 @@ function load_data(~, ~)
     fclose('all');
     disp(' ')
     disp('Data loaded!')
+    
+    % Warning about image orientation. Hopefully will not be needed in future releases. This orientation is purely visual. Does not affect the real voxel masks positioning.
+
+    annotation('textbox', [0.32 0.605 0.57 0.08], 'units', 'normalized', 'String', ('Please be careful about orientation.'), 'FitBoxToText', 'on', 'FontSize', 16, 'FontWeight','normal', 'HitTest','off');
+    annotation('textbox', [0.262 0.575 0.57 0.08], 'units', 'normalized', 'String', ('Normally a Flip AP and a Flip LR are needed if 3D T1w is used.'), 'FitBoxToText', 'on', 'FontSize', 16, 'FontWeight','normal', 'HitTest','off');
 
     setGroupVisibility(hTABLE, 'On')
 
@@ -1346,7 +1351,7 @@ function process_CSD(varargin)
     
         load_csd_parameters;
         
-        if  GR_ex == 0 || GR_echo1 == 0 || GR_echo2 == 0
+        if isequal(spec_struct.Manufacturer, 'Siemens') && ( GR_ex == 0 || GR_echo1 == 0 || GR_echo2 == 0)
             errordlg("Please input the gradient strengths correctly!")
             set(hPROC_CSDE_btn, 'String', 'Process CSDE', 'Enable', 'on')
             return
@@ -1431,6 +1436,9 @@ function process_CSD(varargin)
     set(hPROC_CSDE_btn, 'Enable', 'on', 'String', 'Process CSDE')
     disp(' ')
     disp('Chemical Shift Displacement processed!')
+
+    apply_flip_AP(hAxes, hf.UserData.AP_flipped);
+    apply_flip_LR(hAxes, hf.UserData.LR_flipped);
 end
 
 %% Individual voxel processing functions
@@ -2331,7 +2339,7 @@ function mouse_click(~, ~)
             if exist('anno',"var")
                 delete(anno);
             end
-            anno = annotation('textbox', [0.52 0.655 0.57 0.08], 'units', 'normalized', 'String', ('Scroll PS file with mousewheel | Zoom with Ctrl + mousewheel | Pan with LMB'), 'FitBoxToText', 'on', 'FontSize', 16, 'FontWeight','normal', 'HitTest','off');
+            anno = annotation('textbox', [0.52 0.655 0.57 0.08], 'units', 'normalized', 'String', ('Scroll with mousewheel | Zoom with Ctrl + mousewheel | Pan with LMB'), 'FitBoxToText', 'on', 'FontSize', 16, 'FontWeight','normal', 'HitTest','off');
 
         elseif isunix
             open_cmd = sprintf('%s %s', 'evince', fullfile(spec_struct.spec_processing_path, 'lcm', ps_file));
@@ -2516,7 +2524,6 @@ end
 
 function show_appropriate_CSDE_parameters(~,~)
 
-    set(hCSDE_Vis_btn, 'string', 'Hide CSD parameters');
     setGroupVisibility(hCSDE, 'on')
     if isequal(Manufacturer, 'Philips')
         setGroupVisibility(hCSDE_Philips, 'on')
@@ -2652,7 +2659,7 @@ end
 function save_image
 
     F = getframe(hAxes);
-    image_folder = [curdir 'images' filesep ['delta_ppmShift_' num2str(curr_ppmShift)]];
+    image_folder = [spec_struct.spec_processing_path filesep 'images' filesep ['delta_ppmShift_' num2str(curr_ppmShift)]];
     if ~exist(image_folder, "dir")
         mkdir(image_folder)
     end

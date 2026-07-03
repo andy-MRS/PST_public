@@ -10,7 +10,8 @@ function raw_name = pst_make_raw_file(spec_struct, iswater)
         create_raw(spec_struct, raw_name)
     else
         [~, name, ~] = fileparts(spec_struct.water_struct.water_file);
-        raw_name = [spec_struct.spec_processing_path filesep 'lcm' filesep name '.RAW']; 
+        raw_name = [spec_struct.spec_processing_path filesep 'lcm' filesep name '.RAW'];
+        spec_struct.water_struct.geometry.VOI_size = spec_struct.geometry.VOI_size; % this is missing in the water struct. Ideally they should be of the same size all the time.
         create_raw(spec_struct.water_struct, raw_name)
 
     end

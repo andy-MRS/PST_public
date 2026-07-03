@@ -12,12 +12,12 @@ function resliced_files = pst_reslice_quantitative_files(quantitative_files, ref
         [path, name, ext] = fileparts(quantitative_files{i});
         path = [path filesep 'resliced'];
         resliced_name = ['resliced_' name ext];        
-        if exist(fullfile(path, resliced_name), "file")
-            fprintf('%s%d%s%d%s\n', 'Reslicing of the quantitative image ', i, '/', size(quantitative_files,2), ' has already been performed.');
-        else
-            fprintf('%s%d%s%d%s', 'Reslicing the quantitative image ', i, '/', size(quantitative_files,2), '...');
-            pst_reslice(quantitative_files{i}, ref_file);
-        end
+        % if exist(fullfile(path, resliced_name), "file")
+            % fprintf('%s%d%s%d%s\n', 'Reslicing of the quantitative image ', i, '/', size(quantitative_files,2), ' has already been performed.');
+        % else
+        fprintf('%s%d%s%d%s', 'Reslicing the quantitative image ', i, '/', size(quantitative_files,2), '...');
+        pst_reslice(quantitative_files{i}, ref_file);
+        % end
         resliced_files{i} = fullfile(path, resliced_name);
 
     end
@@ -43,14 +43,14 @@ function pst_reslice(input_file, ref_file)
    
     anat_vol = spm_vol(input_file);
     ref_vol = spm_vol(ref_file);
-    aff_diff = abs(anat_vol.mat - ref_vol.mat);
+    % aff_diff = abs(anat_vol.mat - ref_vol.mat);
     
-    if all(aff_diff(:) < 0.05)       % 0.05 mm difference in the affine is okay, no need to reslice
-
-        fprintf('\n%s\n', 'Affine matrices are close — skipping reslicing.');
-        resliced_file = fullfile([resliced filesep 'resliced_' anat_name '.nii']);
-        copyfile(input_file, resliced_file);
-    else    
+    % if all(aff_diff(:) < 0.05)       % 0.05 mm difference in the affine is okay, no need to reslice
+    % 
+    %     fprintf('\n%s\n', 'Affine matrices are close — skipping reslicing.');
+    %     resliced_file = fullfile([resliced filesep 'resliced_' anat_name '.nii']);
+    %     copyfile(input_file, resliced_file);
+    % else    
         flags = struct('mask', false, ...
                    'mean', false, ...
                    'interp', 0, ...
@@ -62,5 +62,5 @@ function pst_reslice(input_file, ref_file)
         evalc(reslice_cmd);
         fprintf('%s\n', 'finished.');
 
-    end
+    % end
 end
