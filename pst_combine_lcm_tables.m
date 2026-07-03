@@ -1,11 +1,7 @@
-function spec_struct = pst_combine_lcm_tables(spec_struct, filename, ij)
+function spec_struct = pst_combine_lcm_tables(spec_struct, ij)
 
-    filename(filename == '^') = '_';
-    cur_dir = pwd;
-    [path, ~] = fileparts(filename);
-    
     %check if lcm folder exists
-    lcm_dir = fullfile(path, 'lcm');
+    lcm_dir = fullfile(spec_struct.spec_processing_path, 'lcm');
     if ~isfolder(lcm_dir)
         fprintf('LCM folder not found. Creating table without LCM data.\n');
         return;
@@ -18,7 +14,7 @@ function spec_struct = pst_combine_lcm_tables(spec_struct, filename, ij)
     end
     
     % take only tables from the folder
-    cd([path filesep 'lcm']);
+    cd([spec_struct.spec_processing_path filesep 'lcm']);
     lcm_contents = dir();
     
     fprintf('%s\n', 'Combining the LCModel results into spec_struct.voxel_results...');
@@ -52,7 +48,6 @@ function spec_struct = pst_combine_lcm_tables(spec_struct, filename, ij)
     end
     fprintf('%s\n\n', 'Finished!')
     
-    cd(cur_dir);
 end
 
 function out = local_io_readlcmtab(filename)

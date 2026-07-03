@@ -1,5 +1,9 @@
 % Change log
 
+% 03.07.2026
+% - zip archives with the example data added
+% - the results of the spectral processing are saved in the folder processed_spectrum_name, not mixed all together anymore
+% - now it's possible to save the final table if the processing files were there from the previous processing, no need select the same voxels, run LCModel and quantify composition.
 
 % 02.07.2026
 % - SV functionality fixed

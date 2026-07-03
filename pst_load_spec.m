@@ -58,6 +58,10 @@ function spec_struct = pst_load_spec(spec, water, ref_file, is_sv, Manufacturer)
     % MRS full name here
     spec_struct.spec_file = spec;
     [spec_struct.spec_path, spec_struct.spec_name, spec_struct.spec_ext] = fileparts(spec);
+
+    % This current spec processing path here
+    spec_struct.spec_processing_path = [spec_struct.spec_path filesep 'processing_' spec_struct.spec_name];
+
     
     if ~isempty(water)
         if isequal(Manufacturer, 'Philips')

@@ -1,7 +1,7 @@
 function pst_make_table(spec_struct, table_file, lcmodel_processed, segmentation_analyzed, ppmShifts, parametric_analyzed, param_names, lcmodel_new_fields, sel_names_struct)
     
     spec_sz = [spec_struct.nXvoxels spec_struct.nYvoxels spec_struct.nZvoxels];
-
+    
     disp('Generating results table...');
     csv_file = [table_file '.csv'];
     fid = fopen(csv_file, 'a');

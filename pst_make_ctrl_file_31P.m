@@ -1,5 +1,8 @@
 function ctrl_name = pst_make_ctrl_file_31P(filename, basis_set, icolst, irowst, select_name, raw_name, raw_name_water, lcm_data_file)
 
+% function not updated and should not work now. But currently, 2D 31P MRSI
+% LCModel processing is not the 1st priority for us. If you want it please
+% contact me
 hdr = pst_read_spec_header(filename);
 [path, name] = fileparts(filename);
 if isempty(select_name)

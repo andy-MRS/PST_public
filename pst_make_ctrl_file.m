@@ -1,6 +1,6 @@
 function ctrl_name = pst_make_ctrl_file(spec_struct, basis_set, icolst, irowst, select_name, raw_name, raw_name_water, lcm_data_file)
 
-[path, name] = fileparts(spec_struct.spec_file);
+[~, name] = fileparts(spec_struct.spec_file);
 if isempty(select_name)
     new_name = name;
 else
@@ -9,12 +9,12 @@ end
 
 col_str = num2str(icolst);
 row_str = num2str(irowst);
-ps_name = fullfile(path, 'lcm', [new_name '_' row_str '-' col_str '.ps']);
-table_name = fullfile(path, 'lcm', [new_name '_' row_str '-' col_str '.table']);
-csv_name = fullfile(path, 'lcm', [new_name '_' row_str '-' col_str '.csv']);
-print_name = fullfile(path, 'lcm', [new_name '_' row_str '-' col_str '.print']);
-coord_name = fullfile(path, 'lcm', [new_name '_' row_str '-' col_str '.coord']);
-ctrl_name = fullfile(path, 'lcm', [name '_' row_str '-' col_str '.control']);
+ps_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '.ps']);
+table_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '.table']);
+csv_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '.csv']);
+print_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '.print']);
+coord_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '.coord']);
+ctrl_name = fullfile(spec_struct.spec_processing_path, 'lcm', [name '_' row_str '-' col_str '.control']);
 hzpppm = spec_struct.txfrq/10^6;
 nunfil = spec_struct.samples;
 t_dwell = 1/spec_struct.spectralwidth;
@@ -42,8 +42,9 @@ title = sprintf(' %s''%s''\n', 'title = ', title_tmp);
 if ispc
     filbas_str = sprintf(' %s''%s''\n', 'filbas = ', basis_set);
 elseif isunix
-    [~, home] = system('echo -n $HOME');
-    filbas_str = sprintf(' %s''%s''\n', 'filbas = ', basis_set);
+    disp('UNIX not yet addressed')
+    % [~, home] = system('echo -n $HOME');
+    % filbas_str = sprintf(' %s''%s''\n', 'filbas = ', basis_set);
 end
 filraw_str = sprintf(' %s''%s''\n', 'filraw = ', raw_name);
 if ~isempty(raw_name_water) 
