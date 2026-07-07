@@ -26,13 +26,14 @@ function spec_struct = pst_load_spec(spec, water, ref_file, is_sv, Manufacturer)
 
         % fill geo information 
         spec_struct.geometry.VOI_size = [spec_struct.geometry.size.VoI_RoFOV, spec_struct.geometry.size.VoI_PeFOV, spec_struct.geometry.size.VoIThickness];
-        spec_struct.geometry.VOI_shift = [spec_struct.geometry.pos.PosSag, spec_struct.geometry.pos.PosCor, spec_struct.geometry.pos.PosTra];
+        spec_struct.geometry.VOI_shift = [spec_struct.geometry.pos.PosSag, spec_struct.geometry.pos.PosCor, spec_struct.geometry.pos.PosTra]; % this is used in SV case
         spec_struct.geometry.VOI_ang = [spec_struct.geometry.rot.NormSag, spec_struct.geometry.rot.NormCor, spec_struct.geometry.rot.NormTra];
         if ~is_sv
             spec_struct.geometry.FOV_size = [spec_struct.geometry.si_size.VoI_RoFOV, spec_struct.geometry.si_size.VoI_PeFOV, spec_struct.geometry.si_size.VoIThickness];
-            % in Siemens, VOI and FoV are aligned and centered, right?
-            spec_struct.geometry.FOV_shift = spec_struct.geometry.VOI_shift;
-            spec_struct.geometry.FOV_ang = spec_struct.geometry.VOI_ang;
+            spec_struct.geometry.FOV_shift = [spec_struct.geometry.si_pos.PosSag, spec_struct.geometry.si_pos.PosCor, spec_struct.geometry.si_pos.PosTra];
+            % in Siemens, VOI and FoV are aligned and centered, right? So, reassign the center point = center of the FOV
+            spec_struct.geometry.VOI_shift = spec_struct.geometry.FOV_shift;
+            spec_struct.geometry.FOV_ang = spec_struct.geometry.VOI_ang; 
         end
     end
     
