@@ -27,22 +27,39 @@ function [out] = pst_loadspec_rda(filename)
     
     head_start_text = '>>> Begin of header <<<';
     head_end_text   = '>>> End of header <<<';
-    
+    alternative_end_text_by_rda_changers   = '>>> End of header <<< ↵';
+
     tline = fgets(fid);
     
-    while ~contains(tline,head_end_text)
-    %while (isempty(strfind(tline , head_end_text)))
+    while (~strcmp(tline, head_end_text)) && (~contains(tline, head_end_text))
     
         tline = fgets(fid);
     
-        if ~contains(tline,head_start_text) && ~contains (tline,head_end_text)
-        %if ( isempty(strfind (tline , head_start_text)) + isempty(strfind (tline , head_end_text )) == 2)
+        if ~contains(tline,head_start_text) && ~(contains(tline, head_end_text)) % || (~contains(tline, alternative_end_text_by_rda_changers)))
     
             % Store this data in the appropriate format
-    
+            % changed to suit XA60 (one of the versions that contains commas)
+
             occurence_of_colon = findstr(':',tline);
+            disp(tline)
+
+            if contains(tline,'MidSlabPosition[2,2')
+                a=5;
+            end
+            
             variable = tline(1:occurence_of_colon-1) ;
+           
+
+            if any(ismember(variable,','))
+                variable = strrep(variable,',','.');
+            end
             value    = tline(occurence_of_colon+1 : length(tline)) ;
+
+            if any(ismember(value,','))
+                value = strrep(value,',','.');
+            end
+            % value = str2double(value);
+
     
             switch variable
                 case { 'PatientID' , 'PatientName' , 'StudyDescription' , 'PatientBirthDate' , 'StudyDate' , 'StudyTime' , 'PatientAge' , 'SeriesDate' , ...
@@ -104,36 +121,43 @@ function [out] = pst_loadspec_rda(filename)
                     rda.SlabThickness(2) = str2num(value);
                 case {'SlabThickness[2]' }
                     rda.SlabThickness(3) = str2num(value);
-                case {'SlabOrientation[0,0]' }
+                case {'SlabOrientation[0.0]' }
                     rda.SlabOrientation(1,1) = str2num(value);
-                case {'SlabOrientation[0,1]' }
+                case {'SlabOrientation[0.1]' }
                     rda.SlabOrientation(1,2) = str2num(value);
-                case {'SlabOrientation[0,2]' }
+                case {'SlabOrientation[0.2]' }
                     rda.SlabOrientation(1,3) = str2num(value);
-                case {'SlabOrientation[1,0]' }
+                case {'SlabOrientation[1.0]' }
                     rda.SlabOrientation(2,1) = str2num(value);
-                case {'SlabOrientation[1,1]' }
+                case {'SlabOrientation[1.1]' }
                     rda.SlabOrientation(2,2) = str2num(value);
-                case {'SlabOrientation[1,2]' }
+                case {'SlabOrientation[1.2]' }
                     rda.SlabOrientation(2,3) = str2num(value);
-                case {'SlabOrientation[2,0]' }
+                case {'SlabOrientation[2.0]' }
                     rda.SlabOrientation(3,1) = str2num(value);
-                case {'SlabOrientation[2,1]' }
+                case {'SlabOrientation[2.1]' }
                     rda.SlabOrientation(3,2) = str2num(value);
-                case {'SlabOrientation[2,2]' }
+                case {'SlabOrientation[2.2]' }
                     rda.SlabOrientation(3,3) = str2num(value);    
                 % Addressing FOV:
                 case {'FoV3D' }
                     rda.FoV3D = str2num(value);
                 case {'PixelSpacing3D' }
                     rda.PixelSpacing3D = str2num(value);
-                % for PSF correction:
+                case {'MidSlabPosition[1.0]' }
+                    rda.MidSlabPosition(1) = str2num(value);
+                case {'MidSlabPosition[1.1]' }
+                    rda.MidSlabPosition(2) = str2num(value);
+                case {'MidSlabPosition[1.2]' }
+                    rda.MidSlabPosition(3) = str2num(value);
                 case {'CSIMatrixSizeOfScan[0]' }
                     rda.CSIMatrix_SizeOfScan(1) = str2num(value);
                 case {'CSIMatrixSizeOfScan[1]' }
                     rda.CSIMatrix_SizeOfScan(2) = str2num(value);
                 case {'CSIMatrixSizeOfScan[2]' }
                     rda.CSIMatrix_SizeOfScan(3) = str2num(value);
+
+
                 %mod. end%
                 otherwise
                     % We don't know what this variable is.  Report this just to keep things clear
@@ -182,24 +206,48 @@ function [out] = pst_loadspec_rda(filename)
         geometry.rot.NormTra        = rda.SlabOrientation(1,3); % Transversal component of normal vector of voxel
     
         % FoV case
-        if isfield(rda,'FoVWidth')
-            geometry.si_size.VoI_RoFOV = rda.FoVWidth;
-            geometry.si_size.VoI_PeFOV = rda.FoVHeight;
-            geometry.si_size.VoIThickness = rda.FoV3D;
+        if isfield(rda,'CSIMatrix_Size')
 
             % matrix size
             out.nXvoxels = rda.CSIMatrix_Size(1);
             out.nYvoxels = rda.CSIMatrix_Size(2);
             out.nZvoxels = rda.CSIMatrix_Size(3);
-            
-            % spectroscopic voxel size
-            geometry.vox_sz = [rda.PixelSpacingRow, rda.PixelSpacingCol, rda.PixelSpacing3D];
+
+            if isfield(rda,'FoVWidth')
+
+                % MRSI individual voxel size
+                geometry.vox_sz = [rda.PixelSpacingRow, rda.PixelSpacingCol, rda.PixelSpacing3D];
+
+                % FoV
+                geometry.si_size.VoI_RoFOV = rda.FoVWidth;
+                geometry.si_size.VoI_PeFOV = rda.FoVHeight;
+                geometry.si_size.VoIThickness = rda.FoV3D;
+
+
+            else % XA60 case
+
+                % MRSI individual voxel size
+                geometry.vox_sz = [rda.PixelSpacingRow, rda.PixelSpacingCol, rda.SlabThickness(1)];
+
+                % FoV
+                geometry.si_size.VoI_RoFOV = rda.PixelSpacingRow * rda.CSIMatrix_Size(1) ;
+                geometry.si_size.VoI_PeFOV = rda.PixelSpacingCol * rda.CSIMatrix_Size(2);
+                geometry.si_size.VoIThickness = rda.SlabThickness(1) * rda.CSIMatrix_Size(3);
+
+                geometry.si_pos.PosSag         = rda.MidSlabPosition(1);    % Sagittal coordinate of voxel [mm]
+                geometry.si_pos.PosCor         = rda.MidSlabPosition(2);    % Coronal coordinate of voxel [mm]
+                geometry.si_pos.PosTra         = rda.MidSlabPosition(3);    % Transversal coordinate of voxel [mm]
+            end
+
+
         else
             out.nXvoxels = 1;
             out.nYvoxels = 1;
             out.nZvoxels = 1;
 
             geometry.vox_sz = rda.SlabThickness;
+
+
 
         end
 
@@ -264,6 +312,9 @@ function [out] = pst_loadspec_rda(filename)
         geometry.si_size.VoI_RoFOV = rda.FoVWidth;
         geometry.si_size.VoI_PeFOV = rda.FoVHeight;
         geometry.si_size.VoIThickness = rda.FoV3D;
+        geometry.si_pos.PosSag         = geometry.pos.PosSag;    % Sagittal coordinate of voxel [mm]
+        geometry.si_pos.PosCor         = geometry.pos.PosCor;    % Coronal coordinate of voxel [mm]
+        geometry.si_pos.PosTra         = geometry.pos.PosTra;    % Transversal coordinate of voxel [mm]
 
         % matrix size
         out.nXvoxels = rda.CSIMatrix_Size(1);
