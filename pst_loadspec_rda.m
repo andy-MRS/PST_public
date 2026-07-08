@@ -41,15 +41,7 @@ function [out] = pst_loadspec_rda(filename)
             % changed to suit XA60 (one of the versions that contains commas)
 
             occurence_of_colon = findstr(':',tline);
-            disp(tline)
-
-            if contains(tline,'MidSlabPosition[2,2')
-                a=5;
-            end
-            
             variable = tline(1:occurence_of_colon-1) ;
-           
-
             if any(ismember(variable,','))
                 variable = strrep(variable,',','.');
             end
