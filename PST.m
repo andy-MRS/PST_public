@@ -349,8 +349,11 @@ hTABLE.hTabledir_edit = hTabledir_edit;
 hTABLE.hTable_btn = hTable_btn;
 hTABLE.hMaketable_btn = hMaketable_btn;
 
-% Annotation
-anno = annotation('textbox', [0.52 0.655 0.57 0.08], 'units', 'normalized', 'String', ('Click on a processed voxel to open the LCModel ps file.'), 'FitBoxToText', 'on', 'FontSize', 20, 'FontWeight','normal', 'HitTest','off', 'Visible', 'off');
+anno_warning = annotation('textbox', [0.32 0.605 0.57 0.08], 'units', 'normalized', 'String', ('Please be careful about orientation.'), 'FitBoxToText','On', 'FontSize', 9, 'FontWeight','normal', 'HitTest','off', 'Visible', 'off');
+anno_warning2 = annotation('textbox', [0.262 0.575 0.57 0.08], 'units', 'normalized', 'String', ('Normally a Flip AP and a Flip LR are needed if 3D T1w is used.'), 'FitBoxToText','On','FontSize', 9, 'FontWeight','normal', 'HitTest','off', 'Visible', 'off');
+anno_noLCModel = annotation('textbox', [0.62 0.655 0.70 0.08], 'units', 'normalized', 'String', ('This voxel was not processed in LCModel'), 'FitBoxToText','On','FontSize', 9, 'FontWeight','normal', 'HitTest','off', 'PickableParts','none', 'Visible', 'off');
+anno_LCModel = annotation('textbox', [0.62 0.655 0.57 0.08], 'units', 'normalized', 'String', ('Click on a processed voxel to open the LCModel ps file.'), 'FitBoxToText','On','FontSize', 9, 'FontWeight','normal', 'HitTest','off', 'Visible', 'off');
+anno_scroll_PS = annotation('textbox', [0.62 0.655 0.57 0.08], 'units', 'normalized', 'String', ('Use mousewheel to scroll, Ctrl+mousewheel to zoom and LMB to pan.'), 'FitBoxToText','On','FontSize', 9, 'FontWeight','normal', 'HitTest','off', 'Visible', 'off');
 
 % Enable
 hEnableBtns_btn = uicontrol(hf, 'Visible', 'off', 'Style', 'pushbutton', 'String', 'Enable all buttons', 'Position',  [col_vis+40-len/5 e_offs+0.5*gr_sz len/2 25], 'Callback', {@(~,~) enable_buttons});
@@ -367,7 +370,9 @@ set([hTitle hRef_text hRef_edit hFilespec_text hFilespec_edit hFilespec_btn hFil
     hMagnText hMagnEdit hMagnUp hMagnDown ...
     hSaveImage_btn hImageName_edit ...
     hProcSel_btn hReuseSel_btn hCSDE_Vis_btn hFlip_LR_btn hIndividual_text hPROC_CSDE_btn hResetView_btn ...
-    hShowCSText, hCSModifiedText, hIncreaseCS, hDecreaseCS, hEnableBtns_btn], ...
+    hShowCSText, hCSModifiedText, hIncreaseCS, hDecreaseCS, hEnableBtns_btn ...
+    anno_warning, anno_warning2, anno_LCModel, anno_noLCModel, anno_scroll_PS...
+    ], ...
     'Units', 'normalized', 'FontUnits', 'normalized');
 
 %% Initialize GUI functions
@@ -377,11 +382,22 @@ function my_close(~, ~)
     delete(gcf);
 end
 
+% Resize window
 hf.ResizeFcn = @onFigureResize;
 function onFigureResize(~, ~)
 
     set(hAxes, 'Units', 'normalized', 'Position', [0.26 0.17 0.25*magn_factor*width_factor 0.45*magn_factor]);
     set(hAxes2, 'Units', 'normalized', 'Position', [0.52 0.00 0.47 0.74]);
+
+    % figSize = get(hf,'Position');
+    % W = figSize(3);
+    % fontsize_factor = W/2560;
+
+    % set(anno_warning, 'FontSize', round(16*fontsize_factor))
+    % set(anno_warning2, 'FontSize', round(16*fontsize_factor))
+    % set(anno_LCModel, 'FontSize', round(16*fontsize_factor))
+    % set(anno_noLCModel, 'FontSize', round(16*fontsize_factor))
+
 end
 
 %% Settings tab functions
@@ -762,10 +778,14 @@ function load_data(~, ~)
     disp('Data loaded!')
     
     % Warning about image orientation. Hopefully will not be needed in future releases. This orientation is purely visual. Does not affect the real voxel masks positioning.
+    
+    figSize = get(hf,'Position');
+    W = figSize(3);
+    fontsize_factor = W/2560;
 
-    annotation('textbox', [0.32 0.605 0.57 0.08], 'units', 'normalized', 'String', ('Please be careful about orientation.'), 'FitBoxToText', 'on', 'FontSize', 16, 'FontWeight','normal', 'HitTest','off');
-    annotation('textbox', [0.262 0.575 0.57 0.08], 'units', 'normalized', 'String', ('Normally a Flip AP and a Flip LR are needed if 3D T1w is used.'), 'FitBoxToText', 'on', 'FontSize', 16, 'FontWeight','normal', 'HitTest','off');
-
+    set(anno_warning, 'Visible', 'On')
+    set(anno_warning2, 'Visible', 'On')
+    
     setGroupVisibility(hTABLE, 'On')
 
 end
@@ -1899,7 +1919,7 @@ function process_lcmodel(~, ~)
     set(hLCM_btn, 'String', 'LCModel');
     setGroupVisibility(hTABLE, 'On')
     
-    set(anno, 'Visible', 'on'); 
+    set(anno_LCModel, 'Visible', 'on');
 
 end
 
@@ -2299,7 +2319,7 @@ function mouse_click(~, ~)
     end
 
     pdf_files = dir(fullfile(spec_struct.spec_processing_path, 'lcm', 'lcm_pdf', file_ptrn));
-    delete(anno);
+    delete(anno_LCModel);
     if ~isempty(pdf_files)
         pdf_file = pdf_files(1).name;
         if ispc
@@ -2336,10 +2356,12 @@ function mouse_click(~, ~)
             set(hAxes2, 'Clipping', 'on')
             setupViewer(fig, hAxes2, folder);
     
-            if exist('anno',"var")
-                delete(anno);
+            if exist('anno_LCModel',"var")
+                delete(anno_LCModel);
             end
-            anno = annotation('textbox', [0.52 0.655 0.57 0.08], 'units', 'normalized', 'String', ('Scroll with mousewheel | Zoom with Ctrl + mousewheel | Pan with LMB'), 'FitBoxToText', 'on', 'FontSize', 16, 'FontWeight','normal', 'HitTest','off');
+
+            set(anno_noLCModel, 'Visible', 'Off')
+            set(anno_scroll_PS, 'Visible', 'On')
 
         elseif isunix
             open_cmd = sprintf('%s %s', 'evince', fullfile(spec_struct.spec_processing_path, 'lcm', ps_file));
@@ -2359,8 +2381,8 @@ function mouse_click(~, ~)
         end
         spectra_pts = [spectra_pts; cur_x cur_y];
     else
-
-        anno = annotation('textbox', [0.52 0.655 0.70 0.08], 'units', 'normalized', 'String', ('This voxel was not processed in LCModel'), 'FitBoxToText', 'on', 'FontSize', 20, 'FontWeight','normal', 'HitTest','off', 'PickableParts','none');
+        set(anno_scroll_PS, 'Visible', 'Off')
+        set(anno_noLCModel, 'Visible', 'On')
         line(hAxes, cur_x, cur_y,'Marker','x', 'Color','r', 'LineStyle','none', 'LineWidth', 1, 'MarkerSize', 6, 'HitTest','off', 'PickableParts','none');
     end
     
