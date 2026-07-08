@@ -213,6 +213,10 @@ function [out] = pst_loadspec_rda(filename)
             out.nYvoxels = rda.CSIMatrix_Size(2);
             out.nZvoxels = rda.CSIMatrix_Size(3);
 
+            out.nAcqXvoxels = rda.CSIMatrix_SizeOfScan(1);
+            out.nAcqYvoxels = rda.CSIMatrix_SizeOfScan(2);
+            out.nAcqZvoxels = rda.CSIMatrix_SizeOfScan(3);
+
             if isfield(rda,'FoVWidth')
 
                 % MRSI individual voxel size
@@ -325,6 +329,8 @@ function [out] = pst_loadspec_rda(filename)
         out.nAcqXvoxels = rda.CSIMatrix_SizeOfScan(1);
         out.nAcqYvoxels = rda.CSIMatrix_SizeOfScan(2);
         out.nAcqZvoxels = rda.CSIMatrix_SizeOfScan(3);
+
+
 
         % spectroscopic voxel size
         geometry.vox_sz = [rda.PixelSpacingRow, rda.PixelSpacingCol, rda.PixelSpacing3D];    
