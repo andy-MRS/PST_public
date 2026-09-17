@@ -5,6 +5,7 @@ function PST
 
 %%  Globals
 quantitative_files = {};
+loaded_ref_file = '';
 ref_file = '';
 spec_file = '';
 spec_file = '';
@@ -27,11 +28,13 @@ img_gr = [];
 width_factor = 1;
 magn_factor = 1;
 is_sv = 0;
+is_3d = 0;
 Manufacturer = '';
 defdir = pwd;
 curdir = defdir;
 cur_sl = [];
 out_sl = [];
+islice = 1;
 idx = 1;
 cur_sel_cell_array = [];
 sel_z_cell_array = [];
@@ -204,6 +207,9 @@ hResetView_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'Reset', 'Visibl
 hSliceSlider = uicontrol(hf, 'Style', 'slider', 'Units', 'normalized', 'Visible', 'off', 'Position', [0.29 0.14 0.2 0.02], 'Callback', {@slice_slider});
 hSliceSlider_text = uicontrol(hf, 'Style', 'text', 'Units', 'normalized', 'Position', [0.21 0.11 0.2 0.02]);
 
+% h3dMRSIslice_text
+h3dMRSIslice_text = uicontrol(hf, 'Style', 'text', 'Units', 'normalized', 'Position', [0.22 0.08 0.2 0.02]);
+
 % Save image
 hSaveImage_btn = uicontrol(hf, 'Style', 'pushbutton', 'String', 'Save image', 'Visible', 'off', 'Position', [col_vis e_offs+row_vis-0.2*gr_sz 48 20], 'HorizontalAlignment', 'left', 'Callback', @(~,~) save_image);
 hImageName_edit = uicontrol(hf, 'Style', 'edit', 'String', '', 'Visible', 'off', 'Position', [col_vis+52 e_offs+row_vis-0.2*gr_sz 48 20], 'Callback', {@edit_text});
@@ -226,6 +232,8 @@ hVIS.hFlip_LR_btn = hFlip_LR_btn;
 hVIS.hResetView_btn = hResetView_btn;
 hVIS.hSlider = hSliceSlider;
 hVIS.hSlider_text = hSliceSlider_text;
+% hVIS.h3dMRSIslice_text = h3dMRSIslice_text;
+
 hVIS.hSaveImage_btn = hSaveImage_btn;
 hVIS.hImageName_edit = hImageName_edit;
 
@@ -368,7 +376,7 @@ set([hTitle hRef_text hRef_edit hFilespec_text hFilespec_edit hFilespec_btn hFil
     hWarningSiemensCSDE_text hGR_text hGR_ex_edit hGR_echo1_edit hGR_echo2_edit ...
     hWidthText hWidthEdit hWidthUp hWidthDown ...   
     hMagnText hMagnEdit hMagnUp hMagnDown ...
-    hSaveImage_btn hImageName_edit ...
+    hSaveImage_btn hImageName_edit h3dMRSIslice_text ...
     hProcSel_btn hReuseSel_btn hCSDE_Vis_btn hFlip_LR_btn hIndividual_text hPROC_CSDE_btn hResetView_btn ...
     hShowCSText, hCSModifiedText, hIncreaseCS, hDecreaseCS, hEnableBtns_btn ...
     anno_warning, anno_warning2, anno_LCModel, anno_noLCModel, anno_scroll_PS...
@@ -577,7 +585,7 @@ end
 function edit_text(hObject, ~)
     switch hObject
         case hRef_edit
-            ref_file = get(hObject, 'String');
+            loaded_ref_file = get(hObject, 'String');
         case hFilespec_edit
             spec_file = get(hObject, 'String');
         case hFilewat_edit
@@ -604,7 +612,7 @@ function ref_browse(~, ~)
 
     if ~isequal(FileName, 0) && ~isequal(PathName, 0)
         set(hRef_edit, 'String', file);
-        ref_file = file;
+        loaded_ref_file = file;
         curdir = PathName;
         set([hFilespec_edit hFilewat_edit hTabledir_edit hTablename_edit], 'String', '');
         img_gr = [];
@@ -632,7 +640,7 @@ function spec_browse(~, ~)
 
     cd(defdir);
     if ~isempty(spec_file)
-        [is_sv, Manufacturer] = pst_get_is_sv_and_vendor(spec_file);
+        [is_sv, is_3d, Manufacturer] = pst_get_is_sv_is_3d_and_vendor(spec_file);
     else
         warning("MRS file is empty")
     end
@@ -671,8 +679,8 @@ function load_data(~, ~)
     % check if there are segmentation and parameter files. Tick the
     % settings if they are there and reslice these images into the ref space
 
-    [segmentation_is_there, segmentation_files] = pst_check_cfiles(ref_file);
-    [q, qMRI_files, qMRI_names] = pst_check_qfiles(ref_file);
+    [segmentation_is_there, segmentation_files] = pst_check_cfiles(loaded_ref_file);
+    [q, qMRI_files, qMRI_names] = pst_check_qfiles(loaded_ref_file);
 
     if ~analyze_segm && (segmentation_is_there>-2)
             answer = questdlg('T1 segmentation exists! Would you like to use the segmented data?', 'Use segmented data?', 'Yes', 'No', 'No');
@@ -709,9 +717,13 @@ function load_data(~, ~)
         disp('Quantitative maps do not participate in processing!')
     end
 
-    resliced_quantitative_files = pst_reslice_quantitative_files(quantitative_files, ref_file);
     
-    spec_struct = pst_load_spec(spec_file, water_file, ref_file, is_sv, Manufacturer);
+    spec_struct = pst_load_spec(spec_file, water_file, loaded_ref_file, is_sv, Manufacturer);
+    
+    ref_file = spec_struct.ref_file;
+
+    resliced_quantitative_files = pst_reslice_quantitative_files(quantitative_files, ref_file);
+
     if ~isempty(water_file)
                 
         % spec_struct = pst_check_water_dim(spec_struct); % water should be
@@ -1027,13 +1039,7 @@ function slice_slider(hObject, ~)
     hAxes.YColor = 'none';
     hAxes.XTick  = [];
     hAxes.YTick  = [];
-    if ~is_sv
-        draw_FOV(spec_struct.geometry);
-        draw_VOI(curr_ppmShift);
-        draw_selection(spec_struct.geometry);
-    else
-        draw_VOI(curr_ppmShift);
-    end
+
     
     apply_flip_AP(hAxes, hf.UserData.AP_flipped);
     apply_flip_LR(hAxes, hf.UserData.LR_flipped);
@@ -1049,7 +1055,24 @@ function slice_slider(hObject, ~)
     end
     set(hSliceSlider_text, 'String', ['slice' num2str(idx)]);
     set(hImageName_edit, 'String', ['slice' num2str(idx)]);
+
+    if is_3d
+        islice = ceil(idx / spec_struct.mrsi_slice_thkn);
+        if islice > spec_struct.nZvoxels
+            islice = spec_struct.nZvoxels;
+        end
+        set(h3dMRSIslice_text, 'String', ['3D MRSI slice = ' num2str(islice)]);
+    end
+
     image_name = ['slice' num2str(idx)];
+
+    if ~is_sv
+        draw_FOV(spec_struct.geometry);
+        draw_VOI(curr_ppmShift);
+        draw_selection(spec_struct.geometry);
+    else
+        draw_VOI(curr_ppmShift);
+    end
 end
 
 %% Chemical Shift displacement functions
@@ -1489,8 +1512,8 @@ function select_voxels(~,~)
         selection_name = default_name;
     end
 
-    sel_z = idx * spec_struct.geometry.ref_vox_sz(3)/spec_struct.geometry.vox_sz(3);
-    sel_z_spec = 1;
+    % sel_z = idx * spec_struct.geometry.ref_vox_sz(3)/spec_struct.geometry.vox_sz(3);
+    sel_z_spec = islice;
     
     [~, rect] = imcrop(hAxes);
     if ~isempty(rect)
@@ -1533,11 +1556,11 @@ function select_voxels(~,~)
         end
         fid = fopen(sel_file, 'a');
         if ftell(fid) == 0
-            fprintf(fid, '%s\n', 'i j Region');
+            fprintf(fid, '%s\n', 'i j s Region');
         end
         for i = sel_x1_spec:sel_x2_spec
             for j = sel_y1_spec:sel_y2_spec
-                fprintf(fid, '%d\t%d\t%s\n', spec_struct.nXvoxels - i + 1, j, selection_name); 
+                fprintf(fid, '%d\t%d\t%d\t%s\n', spec_struct.nXvoxels - i + 1, j, sel_z_spec, selection_name); 
             end
         end
         fclose(fid);
@@ -1560,20 +1583,22 @@ function reuse_selections(~,~)
 
         switch answer
             case 'Yes'
-                [ij, region] = read_sel_file(sel_file);
-                if ~isempty(ij) && ~isempty(region)
-                    sel_z = 1;
-                    sel_z_cell_array = [sel_z_cell_array {sel_z}];
-                    for ind = 1:size(ij, 1)
+                [ijk, region] = read_sel_file(sel_file);
+                if ~isempty(ijk) && ~isempty(region)
+                    % sel_z = 1;
+                    % sel_z_cell_array = [sel_z_cell_array {sel_z}];
+                    for ind = 1:size(ijk, 1)
                         sel_str = regexp(region{ind}, '\d+', 'match');
                         sel_nr = str2double(sel_str{1})+1;
-                        i = ij(ind, 1);
-                        j = ij(ind, 2);
+                        i = ijk(ind, 1);
+                        j = ijk(ind, 2);
+                        k = ijk(ind, 3);
                         plot_i = spec_struct.nXvoxels - i + 1;
                         plot_j = j;
-                        cur_sel(plot_j, plot_i, sel_z) = sel_nr;
+                        plot_k = k;
+                        cur_sel(plot_j, plot_i, plot_k) = sel_nr;
                     end
-                    cur_sel_cell_array = [cur_sel_cell_array {cur_sel}];
+                    % cur_sel_cell_array = [cur_sel_cell_array {cur_sel}];
                     draw_selection(spec_struct.geometry);
                 else
                     warning("The selection couldn't be taken over!");
@@ -1746,28 +1771,28 @@ function process_lcmodel(~, ~)
             data.lcm_print = lcm_print;
         end
         save(lcm_data_file, '-struct', 'data');
-        if exist([spec_struct.spec_processing_path filesep 'lcm'], 'dir')
-            answer = questdlg('LCModel processing was already done. Would you like to run it again?', 'Question:', 'Yes', 'No', 'No');
-            switch answer
-                case 'Yes'
+        % if exist([spec_struct.spec_processing_path filesep 'lcm'], 'dir')
+            % answer = questdlg('LCModel processing was already done. Would you like to run it again?', 'Question:', 'Yes', 'No', 'No');
+            % switch answer
+                % case 'Yes'
                     lcmDir = fullfile(spec_struct.spec_processing_path, 'lcm');
                     pdfDir = fullfile(spec_struct.spec_processing_path, ['lcm' filesep 'lcm_pdf']);
                     pngDir = fullfile(spec_struct.spec_processing_path, ['lcm' filesep 'lcm_png']);
                     
                     fclose all;
-                    if exist(pdfDir, 'dir')
-                        rmdir(pdfDir, 's');
-                    end
-                    if exist(pngDir, 'dir')
-                        rmdir(pngDir, 's');
-                    end
-                    if exist(lcmDir, 'dir')
-                        rmdir(lcmDir, 's');
-                    end
-                case 'No'
-                    return
-            end
-        end
+                    % if exist(pdfDir, 'dir')
+                        % rmdir(pdfDir, 's');
+                    % end
+        %             if exist(pngDir, 'dir')
+        %                 rmdir(pngDir, 's');
+        %             end
+        %             if exist(lcmDir, 'dir')
+        %                 rmdir(lcmDir, 's');
+        %             end
+        %         case 'No'
+        %             return
+        %     end
+        % end
         if ~isempty(spec_file)
             raw_name = pst_make_raw_file(spec_struct, false);
         end
@@ -1779,23 +1804,25 @@ function process_lcmodel(~, ~)
         sel_names = {};
         sel_names_struct = struct;
         if ~is_sv
-            [ij, sel_names] = read_sel_file(sel_file);
-            if isempty(ij)
+            [ijk, sel_names] = read_sel_file(sel_file);
+            if isempty(ijk)
                 errordlg('Please select voxels for LCModel analysis first!');
                 fprintf('%s\n\n', 'Analysis cancelled!');
                 return
             end
-            for ind = 1:size(ij, 1)
-                i = ij(ind, 1);
-                j = ij(ind, 2);
+            for ind = 1:size(ijk, 1)
+                i = ijk(ind, 1);
+                j = ijk(ind, 2);
+                k = ijk(ind, 3);
                 lcm_i = i;
                 lcm_j = spec_struct.nYvoxels - j + 1;
-                sel_names_struct.(['vox' num2str(lcm_i) '_' num2str(lcm_j)]) = sel_names{ind}; 
+                lcm_k = k;
+                sel_names_struct.(['vox' num2str(lcm_i) '_' num2str(lcm_j) '_' num2str(lcm_k)]) = sel_names{ind}; 
             end
         else
-            ij = [1 1];
+            ijk = [1 1 1];
             sel_names{1} = 'SV';
-            sel_names_struct.('vox1_1') = 'SV';
+            sel_names_struct.('vox1_1_1') = 'SV';
         end
 
         basis_set = data.basis_set;
@@ -1818,14 +1845,14 @@ function process_lcmodel(~, ~)
             
             fprintf('%s', 'Creating control files and running LCModel analysis...');
             tic
-            indices = 1:size(ij,1);
+            indices = 1:size(ijk,1);
             if use_parfor && ~is_sv
                 parfor ind = indices
-                    pst_process_lcm_voxel(ij, ind, spec_struct, basis_set, sel_names{ind}, raw_name, raw_name_water, lcm_data_file);
+                    pst_process_lcm_voxel(ijk, ind, spec_struct, basis_set, sel_names{ind}, raw_name, raw_name_water, lcm_data_file);
                 end
             else
                 for ind = indices
-                    pst_process_lcm_voxel(ij, ind, spec_struct, basis_set, sel_names{ind}, raw_name, raw_name_water, lcm_data_file);
+                    pst_process_lcm_voxel(ijk, ind, spec_struct, basis_set, sel_names{ind}, raw_name, raw_name_water, lcm_data_file);
                 end
             end
             lcm_time = toc;
@@ -1918,9 +1945,10 @@ function process_lcmodel(~, ~)
     set(hLCM_btn, 'Enable', 'on');
     set(hLCM_btn, 'String', 'LCModel');
     setGroupVisibility(hTABLE, 'On')
-    
-    set(anno_LCModel, 'Visible', 'on');
 
+    % if ~isempty('anno_LCModel')
+    % set(anno_LCModel, 'Visible', 'on');
+    % end
 end
 
 function process_composition(~, ~)
@@ -1941,13 +1969,15 @@ function process_composition(~, ~)
         % make a loop over selection, save selection names if not saved at LCModel step
         sel_names = {}; %refresh if the new selection was done after processing
         sel_names_struct = struct;
-        [ij, sel_names] = read_sel_file(sel_file);
-        for ind = 1:size(ij, 1)
-            i = ij(ind, 1);
-            j = ij(ind, 2);
+        [ijk, sel_names] = read_sel_file(sel_file);
+        for ind = 1:size(ijk, 1)
+            i = ijk(ind, 1);
+            j = ijk(ind, 2);
+            k = ijk(ind, 3);
             lcm_i = i;
             lcm_j = spec_struct.nYvoxels - j + 1;
-            sel_names_struct.(['vox' num2str(lcm_i) '_' num2str(lcm_j)]) = sel_names{ind};
+            lcm_k = k;
+            sel_names_struct.(['vox' num2str(lcm_i) '_' num2str(lcm_j) '_' num2str(lcm_k)]) = sel_names{ind};
         end
     else
         sel_names_struct.('vox1_1') = 'SV';
@@ -1973,47 +2003,53 @@ function process_composition(~, ~)
             vol_curr_shift_image_slab = spm_vol(curr_shift_image_slab_filename);
             img = spm_read_vols(vol_curr_shift_image_slab);
             
-            N_sel_vox = size(ij, 1);
+            N_sel_vox = size(ijk, 1);
             seg_tmp = false(N_sel_vox,1); % tmps were made for parfor over ppmShifts. But they were buggy, and hence, deprecated.
             param_tmp = false(N_sel_vox,1);
             vox_ids{i} = cell(N_sel_vox,1);
             
             fprintf('\nDelta chemical shift = %.2f ppm:\n', ppmShifts_with_0(i))
             reverseStr = '';
-            for k = 1:N_sel_vox
-                msg = sprintf('Processing voxel %d/%d', k, size(ij, 1));
+            for q = 1:N_sel_vox
+                msg = sprintf('Processing voxel %d/%d', q, size(ijk, 1));
                 fprintf([reverseStr msg]);
                 reverseStr = repmat(sprintf('\b'), 1, numel(msg));
                 
                 % find ranges where the current MRSI voxel belongs
-                sel_lr_edge1 = spec_struct.nXvoxels - ij(k, 1);
-                sel_lr_edge2 = spec_struct.nXvoxels - ij(k, 1) + 1;
-                sel_ap_edge1 = ij(k, 2) - 1;
-                sel_ap_edge2 = ij(k, 2);
+                sel_lr_edge1 = spec_struct.nXvoxels - ijk(q, 1);
+                sel_lr_edge2 = spec_struct.nXvoxels - ijk(q, 1) + 1;
+                sel_ap_edge1 = ijk(q, 2) - 1;
+                sel_ap_edge2 = ijk(q, 2);
+                sel_fh_edge1 = ijk(q, 3) - 1;
+                sel_fh_edge2 = ijk(q, 3);
 
-                local_ap_edge1 = round(sel_ap_edge1 * spec_struct.geometry.vox_sz(2) / spec_struct.geometry.ref_vox_sz(2));
-                local_ap_edge2 = round(sel_ap_edge2 * spec_struct.geometry.vox_sz(2) / spec_struct.geometry.ref_vox_sz(2));
-                local_lr_edge1 = round(sel_lr_edge1 * spec_struct.geometry.vox_sz(1) / spec_struct.geometry.ref_vox_sz(1));
-                local_lr_edge2 = round(sel_lr_edge2 * spec_struct.geometry.vox_sz(1) / spec_struct.geometry.ref_vox_sz(1));       
+                local_ap_edge1 = ceil(sel_ap_edge1 * spec_struct.geometry.vox_sz(2) / spec_struct.geometry.ref_vox_sz(2)) + 1;
+                local_ap_edge2 = floor(sel_ap_edge2 * spec_struct.geometry.vox_sz(2) / spec_struct.geometry.ref_vox_sz(2));
+
+                local_lr_edge1 = ceil(sel_lr_edge1 * spec_struct.geometry.vox_sz(1) / spec_struct.geometry.ref_vox_sz(1)) + 1;
+                local_lr_edge2 = floor(sel_lr_edge2 * spec_struct.geometry.vox_sz(1) / spec_struct.geometry.ref_vox_sz(1));
+
+                local_fh_edge1 = ceil(sel_fh_edge1 * ( spec_struct.geometry.FOV_size(3) / spec_struct.nZvoxels )/ spec_struct.geometry.ref_vox_sz(3)) + 1;
+                local_fh_edge2 = floor(sel_fh_edge2 * ( spec_struct.geometry.FOV_size(3) / spec_struct.nZvoxels ) / spec_struct.geometry.ref_vox_sz(3));
 
                 % create the mask of the individual MRSI voxel
                 mask = zeros(size(img));
-                mask(local_lr_edge1:local_lr_edge2, local_ap_edge1:local_ap_edge2, :) = 1;
+                mask(local_lr_edge1:local_lr_edge2, local_ap_edge1:local_ap_edge2, local_fh_edge1:local_fh_edge2) = 1;
                 curr_mask = vol_curr_shift_image_slab;
                 
                 % unify the voxel mask name with LCModel name. 
                 % Remember that in LCModel we have row-col and not col-row:
                 % e.g. LCModel 17-27 voxel is 27-17.
                 % BUT at the make_table stage LCModel 17-27 will also turn into 27-17.
-                vox_ids{i}{k} = [spec_struct.nXvoxels-sel_lr_edge1 spec_struct.nYvoxels-sel_ap_edge1];
+                vox_ids{i}{q} = [spec_struct.nXvoxels-sel_lr_edge1 spec_struct.nYvoxels-sel_ap_edge1 sel_fh_edge2];
 
-                curr_mask.fname = fullfile(outdir, sprintf('%d_%d.nii', vox_ids{i}{k}(1), vox_ids{i}{k}(2)));
+                curr_mask.fname = fullfile(outdir, sprintf('%d_%d_%d.nii', vox_ids{i}{q}(1), vox_ids{i}{q}(2), vox_ids{i}{q}(3)));
                 spm_write_vol(curr_mask, mask);
 
                 % apply the mask to get segmentation and qMRI values
                 [segmentation_analyzed_tmp, parametric_analyzed_tmp] = pst_segm(curr_mask.fname, voxel_results_folders, quantitative_slabs_only_VOI{i}, analyze_segm, qMRI_names, ppmShifts_with_0(i));
-                seg_tmp(k) = segmentation_analyzed_tmp;
-                param_tmp(k) = parametric_analyzed_tmp;
+                seg_tmp(q) = segmentation_analyzed_tmp;
+                param_tmp(q) = parametric_analyzed_tmp;
             end
 
             segmentation_analyzed = any(seg_tmp);
@@ -2075,13 +2111,15 @@ function make_table(~, ~)
         sel_file = fullfile(spec_struct.spec_processing_path, sel_name);
         sel_names = {}; %refresh if the new selection was done after processing
         sel_names_struct = struct;
-        [ij, sel_names] = read_sel_file(sel_file);
-        for ind = 1:size(ij, 1)
-            i = ij(ind, 1);
-            j = ij(ind, 2);
+        [ijk, sel_names] = read_sel_file(sel_file);
+        for ind = 1:size(ijk, 1)
+            i = ijk(ind, 1);
+            j = ijk(ind, 2);
+            k = ijk(ind, 3);
             lcm_i = i;
             lcm_j = spec_struct.nYvoxels - j + 1;
-            sel_names_struct.(['vox' num2str(lcm_i) '_' num2str(lcm_j)]) = sel_names{ind};
+            lcm_k = k;
+            sel_names_struct.(['vox' num2str(lcm_i) '_' num2str(lcm_j) '_' num2str(lcm_k)]) = sel_names{ind};
         end
     else
         sel_names_struct.('vox1_1') = 'SV';
@@ -2093,8 +2131,8 @@ function make_table(~, ~)
 
         % combine .table files from LCModel to spec_struct.voxel_results.lcmodel
         if ~is_sv
-            [ij, ~] = read_sel_file(sel_file);
-            spec_struct = pst_combine_lcm_tables(spec_struct, ij);
+            [ijk, ~] = read_sel_file(sel_file);
+            spec_struct = pst_combine_lcm_tables(spec_struct, ijk);
         else
             try 
                 lcm_sv_dir = dir(fullfile([spec_struct.spec_processing_path filesep 'lcm' filesep 'SV_*.table']));
@@ -2170,9 +2208,8 @@ function make_table(~, ~)
     end
 
     cd(defdir)
-    % if ~isempty(spec_file)
-        pst_make_table(spec_struct, table_file, lcmodel_processed, segmentation_analyzed, ppmShifts_with_0, parametric_analyzed, qMRI_names, lcmodel_new_fields, sel_names_struct);
-    % end
+
+    pst_make_table(spec_struct, table_file, lcmodel_processed, segmentation_analyzed, ppmShifts_with_0, parametric_analyzed, qMRI_names, lcmodel_new_fields, sel_names_struct);
 
     fprintf('%s\n', ' ');
     fprintf('%s\n', '___________________________');
@@ -2255,6 +2292,7 @@ function prepare_visual(delta_ppm)
     else
         set(hSliceSlider, 'Visible', 'off');
     end
+
 end
 
 function visual_out(delta_ppm)
@@ -2288,6 +2326,14 @@ function visual_out(delta_ppm)
     set(hSliceSlider_text, 'String', ['slice' num2str(idx)]);
     set(hImageName_edit, 'String', ['slice' num2str(idx)]);
     image_name = ['slice' num2str(idx)];
+
+    if is_3d
+        islice = ceil(idx / spec_struct.mrsi_slice_thkn);
+        if islice > spec_struct.nZvoxels
+            islice = spec_struct.nZvoxels;
+        end
+        set(h3dMRSIslice_text, 'String', ['3D MRSI slice = ' num2str(islice)]);
+    end
 end
 
 function mouse_click(~, ~)
@@ -2313,13 +2359,15 @@ function mouse_click(~, ~)
         totalX = xlimit(2) - xlimit(1);
         cur_x_spec = ceil((totalX - cur_x)*spec_struct.geometry.ref_vox_sz(1)/spec_struct.geometry.vox_sz(1));
         cur_y_spec = ceil((totalY - cur_y)*spec_struct.geometry.ref_vox_sz(2)/spec_struct.geometry.vox_sz(2));
-        file_ptrn = sprintf('%s%d%s%d%s', '*_', cur_y_spec, '-', cur_x_spec, '.pdf');
+        file_ptrn = sprintf('%s%d%s%d%s%d%s', '*_', cur_y_spec, '-', cur_x_spec, '-', islice, '.pdf');
     else
         file_ptrn = sprintf('%s%s%s', 'SV_', '*', '.pdf');
     end
 
     pdf_files = dir(fullfile(spec_struct.spec_processing_path, 'lcm', 'lcm_pdf', file_ptrn));
-    delete(anno_LCModel);
+    % if ~isempty(anno_LCModel)
+        % set(anno_LCModel, 'Visible', 'Off')
+    % end
     if ~isempty(pdf_files)
         pdf_file = pdf_files(1).name;
         if ispc
@@ -2330,9 +2378,9 @@ function mouse_click(~, ~)
                 mkdir([spec_struct.spec_processing_path filesep 'lcm' filesep 'lcm_png']);
             end
             if ~is_sv
-                output_pattern = fullfile(spec_struct.spec_processing_path, 'lcm', 'lcm_png', sprintf('%d_%d', cur_y_spec, cur_x_spec), [pdf_name '_page%02d.png']);
-                if ~isfolder([spec_struct.spec_processing_path filesep 'lcm' filesep 'lcm_png' filesep sprintf('%d_%d', cur_y_spec, cur_x_spec)])
-                    mkdir([spec_struct.spec_processing_path filesep 'lcm' filesep 'lcm_png' filesep sprintf('%d_%d', cur_y_spec, cur_x_spec)]);
+                output_pattern = fullfile(spec_struct.spec_processing_path, 'lcm', 'lcm_png', sprintf('%d_%d_%d', cur_y_spec, cur_x_spec, islice), [pdf_name '_page%02d.png']);
+                if ~isfolder([spec_struct.spec_processing_path filesep 'lcm' filesep 'lcm_png' filesep sprintf('%d_%d_%d', cur_y_spec, cur_x_spec, islice)])
+                    mkdir([spec_struct.spec_processing_path filesep 'lcm' filesep 'lcm_png' filesep sprintf('%d_%d_%d', cur_y_spec, cur_x_spec, islice)]);
                 end
             else
                 output_pattern = fullfile(spec_struct.spec_processing_path, 'lcm', 'lcm_png', [pdf_name '_page%02d.png']);
@@ -2348,17 +2396,13 @@ function mouse_click(~, ~)
                 return
             end
             if ~is_sv
-                folder = fullfile(spec_struct.spec_processing_path, 'lcm', 'lcm_png', sprintf('%d_%d', cur_y_spec, cur_x_spec));
+                folder = fullfile(spec_struct.spec_processing_path, 'lcm', 'lcm_png', sprintf('%d_%d_%d', cur_y_spec, cur_x_spec, islice));
             else
                 folder = fullfile(spec_struct.spec_processing_path, 'lcm', 'lcm_png');
             end
             fig = ancestor(hAxes2, 'figure');
             set(hAxes2, 'Clipping', 'on')
             setupViewer(fig, hAxes2, folder);
-    
-            if exist('anno_LCModel',"var")
-                delete(anno_LCModel);
-            end
 
             set(anno_noLCModel, 'Visible', 'Off')
             set(anno_scroll_PS, 'Visible', 'On')
@@ -2581,34 +2625,34 @@ function setGroupVisibility(hGroup, visibleFlag)
 
 end
 
-function [ij, region] = read_sel_file(sel_file)
+function [ijk, region] = read_sel_file(sel_file)
 
-    ij = [];
+    ijk = [];
     region = {};
     fid = fopen(sel_file);
     if fid == -1
         return
     end
-    sel_data = textscan(fid, '%d%d%s', 'delimiter', '\t', 'CollectOutput', 1, 'HeaderLines', 1);
-    ij = sel_data{1};
+    sel_data = textscan(fid, '%d%d%d%s', 'delimiter', '\t', 'CollectOutput', 1, 'HeaderLines', 1);
+    ijk = sel_data{1};
     region = sel_data{2};
     fclose(fid);
 end
 
 function draw_FOV(geometry)
     
-    hr2 = rectangle('Parent', hAxes, 'Position', [0.5 0.5 floor(geometry.FOV_size(1)/geometry.ref_vox_sz(1))+0.5 floor(geometry.FOV_size(2)/geometry.ref_vox_sz(2))+0.5], 'LineWidth', 0.5, 'EdgeColor', 'y');
+    hr2 = rectangle('Parent', hAxes, 'Position', [0.5 0.5 ceil(geometry.FOV_size(1)/geometry.ref_vox_sz(1)) - 0.5 ceil(geometry.FOV_size(2)/geometry.ref_vox_sz(2)) - 0.5], 'LineWidth', 0.3, 'EdgeColor', 'y');
     
     if lcm_spec
         set(hr2, 'ButtonDownFcn', @mouse_click);
     end
-    for j = 1:spec_struct.nXvoxels-1
-        x = (0.5+geometry.vox_sz(1)*j)/geometry.ref_vox_sz(1);
-        line(hAxes, [x x], [0 (geometry.FOV_size(2))/geometry.ref_vox_sz(2)], 'Color', [0.3059 0.5804 0.2941]);
+    for j = 1:spec_struct.nXvoxels - 1
+        x = (geometry.vox_sz(1)*j)/geometry.ref_vox_sz(1);
+        line(hAxes, [x x], [0.5 (geometry.FOV_size(2))/geometry.ref_vox_sz(2) + 0.5], 'Color', [0.3059 0.5804 0.2941]);
     end
-    for i = 1:spec_struct.nYvoxels-1
-        y = (0.5+geometry.vox_sz(2)*i)/geometry.ref_vox_sz(2);
-        line(hAxes, [0 geometry.FOV_size(1)/geometry.ref_vox_sz(1)], [y y], 'Color', [0.3059 0.5804 0.2941]);
+    for i = 1:spec_struct.nYvoxels - 1
+        y = (geometry.vox_sz(2)*i)/geometry.ref_vox_sz(2);
+        line(hAxes, [0.5 geometry.FOV_size(1)/geometry.ref_vox_sz(1) + 0.5], [y y], 'Color', [0.3059 0.5804 0.2941]);
     end
     
     if lcm_spec
@@ -2667,11 +2711,11 @@ function draw_selection(geometry)
     if ~isempty(cur_sel)
         for i = 1:spec_struct.nXvoxels
             for j = 1:spec_struct.nYvoxels
-                if cur_sel(j,i) > 0
-                    color = colors(cur_sel(j,i), :);
+                if any(cur_sel(j,i,islice))
+                    color = colors(cur_sel(j,i,islice), :);
                     x_start = (i-1) * geometry.vox_sz(1)/geometry.ref_vox_sz(1);
                     y_start = (j-1) * geometry.vox_sz(2)/geometry.ref_vox_sz(2);
-                    rectangle('Parent', hAxes, 'Position', [x_start+0.5 y_start+0.5 geometry.vox_sz(1)/geometry.ref_vox_sz(1) geometry.vox_sz(2)/geometry.ref_vox_sz(2)], 'LineWidth', 0.1, 'EdgeColor', color);
+                    rectangle('Parent', hAxes, 'Position', [x_start y_start geometry.vox_sz(1)/geometry.ref_vox_sz(1) geometry.vox_sz(2)/geometry.ref_vox_sz(2)], 'LineWidth', 0.1, 'EdgeColor', color);
                 end
             end
         end
@@ -2692,7 +2736,7 @@ end
 
 function new_fields = choose_lcmodel_results(all_fields)
 
-    fields_to_choose_from = all_fields(7:2:end);
+    fields_to_choose_from = all_fields(8:2:end);
 
     dlg = dialog('Position',[500 200 200 800], 'Name','Select processed metabolites');
     listbox = uicontrol('Parent', dlg, 'Style', 'listbox', 'Units', 'normalized', 'Position', [0.1 0.2 0.8 0.75], 'String', fields_to_choose_from, 'Max', 2, 'Min', 0);
@@ -2702,8 +2746,8 @@ function new_fields = choose_lcmodel_results(all_fields)
 
     function ok_callback(~, ~)
         selected_idx = 2 * listbox.Value;
-        selected_idx_with_SD = [6 + selected_idx - 1; 6 + selected_idx]; % in addition to the metabolite select its SD
-        selected_idx_with_SD = [3:6, selected_idx_with_SD(:).']; % force select SNR, FWHM and Ph_shift 
+        selected_idx_with_SD = [7 + selected_idx - 1; 7 + selected_idx]; % in addition to the metabolite select its SD
+        selected_idx_with_SD = [5:7, selected_idx_with_SD(:).']; % force select SNR, FWHM and Ph_shift 
         new_fields = all_fields(selected_idx_with_SD);
         delete(dlg);
     end

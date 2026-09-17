@@ -1,7 +1,7 @@
-function [is_sv, manufacturer] = pst_get_is_sv_and_vendor(spec)
+function [is_sv, is_3d, manufacturer] = pst_get_is_sv_is_3d_and_vendor(spec)
 
     is_sv = 0;
-    
+    is_3d = 0;
     [spec_path, spec_name, spec_ext] = fileparts(spec);
     spec_ext = lower(spec_ext);
     if isequal(spec_ext, '.rda')
@@ -28,6 +28,15 @@ function [is_sv, manufacturer] = pst_get_is_sv_and_vendor(spec)
                     value=strrep(value,'''','');
                     if strcmpi(value, 'no')
                         is_sv = 1;
+                    end
+                    % break; 
+                end
+                if contains(line, 'nr_of_slices_for_multislice')
+                    parts = strsplit(line, ':');
+                    value = strtrim(parts{2});
+
+                    if str2double(value) > 1
+                        is_3d = 1;
                     end
                     break; 
                 end

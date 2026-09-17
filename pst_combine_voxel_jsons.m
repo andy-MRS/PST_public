@@ -13,7 +13,7 @@ if isequal(vox_ids, 'SV')
     spec_struct.voxel_results.(['voxresults_' shift_id]).('SV') = readstruct(parametric_json_name); % read the data from individual files
 else
     for k = 1:numel(vox_ids)
-        voxel_id = [num2str(vox_ids{k}(1)) '_', num2str(vox_ids{k}(2))];
+        voxel_id = [num2str(vox_ids{k}(1)) '_' num2str(vox_ids{k}(2)) '_' num2str(vox_ids{k}(3))];
         parametric_json_name = strcat(voxel_results_folders.(['folder_' shift_id]), filesep, voxel_id, '.json');
         if exist(parametric_json_name, 'file')
             spec_struct.voxel_results.(['voxresults_' shift_id]).(['vox' voxel_id]) = readstruct(parametric_json_name); % read the data from individual files

@@ -59,7 +59,7 @@ fid_sdat    = fopen(filename,'r','ieee-le');
 data        = pst_freadVAXG(fid_sdat,sdat_length,'float32');
 fclose(fid_sdat);
 % Reshape and save
-data        = reshape(data, [2 header.samples header.rows]);    
+data        = reshape(data, [2 header.samples header.rows header.nr_of_slices_for_multislice ]);    
 data        = squeeze(data(1,:,:)+1i*data(2,:,:));
 
 end

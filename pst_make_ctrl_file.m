@@ -1,4 +1,4 @@
-function ctrl_name = pst_make_ctrl_file(spec_struct, basis_set, icolst, irowst, select_name, raw_name, raw_name_water, lcm_data_file)
+function ctrl_name = pst_make_ctrl_file(spec_struct, basis_set, icolst, irowst, islice, select_name, raw_name, raw_name_water, lcm_data_file)
 
 [~, name] = fileparts(spec_struct.spec_file);
 if isempty(select_name)
@@ -9,12 +9,13 @@ end
 
 col_str = num2str(icolst);
 row_str = num2str(irowst);
-ps_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '.ps']);
-table_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '.table']);
-csv_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '.csv']);
-print_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '.print']);
-coord_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '.coord']);
-ctrl_name = fullfile(spec_struct.spec_processing_path, 'lcm', [name '_' row_str '-' col_str '.control']);
+sli_str = num2str(islice);
+ps_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '-' sli_str '.ps']);
+table_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '-' sli_str '.table']);
+csv_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '-' sli_str '.csv']);
+print_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '-' sli_str '.print']);
+coord_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '-' sli_str '.coord']);
+ctrl_name = fullfile(spec_struct.spec_processing_path, 'lcm', [name '_' row_str '-' col_str '-' sli_str '.control']);
 hzpppm = spec_struct.txfrq/10^6;
 nunfil = spec_struct.samples;
 t_dwell = 1/spec_struct.spectralwidth;
@@ -37,7 +38,7 @@ fid = fopen(ctrl_name, 'w');
 data = load(lcm_data_file);
 lcm_str = sprintf(' %s\n', '$LCMODL');
 
-title_tmp = [select_name ' row ' row_str ' col ' col_str];
+title_tmp = [select_name ' row ' row_str ' col ' col_str ' slice ' sli_str];
 title = sprintf(' %s''%s''\n', 'title = ', title_tmp);
 if ispc
     filbas_str = sprintf(' %s''%s''\n', 'filbas = ', basis_set);
@@ -88,6 +89,8 @@ icolst_str = sprintf(' %s%d\n', 'icolst = ', icolst);
 icolen_str = sprintf(' %s%d\n', 'icolen = ', icolst);
 irowst_str = sprintf(' %s%d\n', 'irowst = ', irowst);
 irowen_str = sprintf(' %s%d\n', 'irowen = ', irowst);
+islice_str = sprintf(' %s%d\n', 'islice = ', islice);
+
 key_str = sprintf(' %s%d\n', 'key = ', key);
 
 newparams_str = {};
@@ -151,6 +154,7 @@ fwrite(fid, icolst_str, 'char');
 fwrite(fid, icolen_str, 'char');
 fwrite(fid, irowst_str, 'char');
 fwrite(fid, irowen_str, 'char');
+fwrite(fid, islice_str, 'char');
 fwrite(fid, key_str, 'char');
 fwrite(fid, vitro_str, 'char');
 

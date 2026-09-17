@@ -1,4 +1,4 @@
-function spec_struct = pst_combine_lcm_tables(spec_struct, ij)
+function spec_struct = pst_combine_lcm_tables(spec_struct, ijk)
 
     %check if lcm folder exists
     lcm_dir = fullfile(spec_struct.spec_processing_path, 'lcm');
@@ -20,14 +20,16 @@ function spec_struct = pst_combine_lcm_tables(spec_struct, ij)
     fprintf('%s\n', 'Combining the LCModel results into spec_struct.voxel_results...');
     % use selection to choose the files that will go into the table this time
     selected_files = {};
-    for ind = 1:size(ij, 1)
-        i = ij(ind, 1);
-        j = ij(ind, 2);
+    for ind = 1:size(ijk, 1)
+        i = ijk(ind, 1);
+        j = ijk(ind, 2);
+        k = ijk(ind, 3);
         lcm_i = i; % have to switch to lcm style here
         lcm_j = spec_struct.nYvoxels - j + 1;
-        for k = 1:size(lcm_contents, 1)
-            if contains(lcm_contents(k).name, [num2str(lcm_j) '-' num2str(lcm_i) '.table'])
-                selected_files{ind} = lcm_contents(k).name;
+        lcm_k = k;
+        for q = 1:size(lcm_contents, 1)
+            if contains(lcm_contents(q).name, [num2str(lcm_j) '-' num2str(lcm_i) '-' num2str(lcm_k) '.table'])
+                selected_files{ind} = lcm_contents(q).name;
             end
         end
     end
@@ -35,15 +37,15 @@ function spec_struct = pst_combine_lcm_tables(spec_struct, ij)
     for m = 1:numel(selected_files)
         try 
             dataStruct = local_io_readlcmtab(selected_files{m}); % brilliant solution.
-            spec_struct.voxel_results.lcmodel.(['vox' num2str(dataStruct.col) '_' num2str(dataStruct.row)]) = dataStruct; % save the file content to spec_struct
+            spec_struct.voxel_results.lcmodel.(['vox' num2str(dataStruct.col) '_' num2str(dataStruct.row) '_' num2str(dataStruct.sli)]) = dataStruct; % save the file content to spec_struct
         catch
-            % fprintf('%s %s%s\n', 'ERROR: Could not read the LCModel result .table file', selected_files(m), '!')
             fprintf('%s\n', 'ERROR: Could not read the LCModel result .table file!')
-            row_col = regexp(selected_files(m),'\d*-\d*','match');
-            row_col_split = regexp(row_col{1},'-','split');
-            row = [row_col_split{1} ','];
-            col = [row_col_split{2} ','];
-            spec_struct.voxel_results.lcmodel.(['vox' col '_' row]) = [];
+            row_col_sli = regexp(selected_files(m),'\d*-\d*-\d*','match');
+            row_col_sli_split = regexp(row_col_sli{1},'-','split');
+            row = [row_col_sli_split{1} ','];
+            col = [row_col_sli_split{2} ','];
+            sli = [row_col_sli_split{3} ','];
+            spec_struct.voxel_results.lcmodel.(['vox' col '_' row '_' sli]) = [];
         end
     end
     fprintf('%s\n\n', 'Finished!')
@@ -72,22 +74,25 @@ function out = local_io_readlcmtab(filename)
 fid=fopen(filename);
 
 try 
-    row_col_minus = strfind(filename,'-'); 
-    row_col_minus = row_col_minus(end); % the last minus in the filename is between the rows and cols
+    row_col_sli_minuses = strfind(filename,'-'); 
+    row_col_sli_minuses = row_col_sli_minuses(end); % the last minus in the filename is between the cols and slices
     
-    row_col_end = filename(row_col_minus-2:row_col_minus+2);
-    b = regexp(row_col_end,'\d*','Match');
+    row_col_sli_ending = filename(row_col_sli_minuses-5:row_col_sli_minuses+2);
+    b = regexp(row_col_sli_ending,'\d*','Match');
     
     out.row = str2double(b{1});
     out.col = str2double(b{2});
+    out.sli = str2double(b{3});
 
     if isempty(out.row)
         out.row = 1;
         out.col = 1;
+        out.sli = 1;
     end
 catch e
         out.row = 1;
         out.col = 1;
+        out.sli = 1;
 end
 
 line=fgets(fid);

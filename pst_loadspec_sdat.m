@@ -51,9 +51,11 @@ end
 dims.coils      = 0; % SDAT is already coil-combined
 % Now arrange in the standard order (samples-avgs-subspecs):
 if (isfield(header, 'nr_of_slices_for_multislice') && header.nr_of_slices_for_multislice > 1) && (isfield(header, 'dim2_pnts') && header.dim2_pnts' > 1)
-    data = permute(data ,[dims.t dims.averages dims.Zvoxels]);  
     dims.Zvoxels = 3;
     dims.averages = 2;
+    data = permute(data ,[dims.t dims.averages dims.Zvoxels]);  
+    % dims.Zvoxels = 3;
+    % dims.averages = 2;
     dims.extras = 0;
 else if (header.rows > 1 && header.averages > 1) && series
         if length(data_size) > 2 % Data has averages and series
@@ -152,6 +154,7 @@ out.dims=dims;
 out.Bo=Bo;
 out.samples=header.samples;
 out.averages=averages;
+out.volume_selection_enable=header.volume_selection_enable;
 out.rawAverages=rawAverages;
 out.subspecs=subspecs;
 out.rawSubspecs=rawSubspecs;
@@ -204,7 +207,7 @@ if isfield(header, 'phase_encoding_fov')
     geometry.si_size.ap = spec_vox_size_y * out.nYvoxels;
     geometry.si_size.cc = header.slice_thickness;
 
-    spec_vox_size_z = geometry.size.cc;
+    spec_vox_size_z = geometry.si_size.cc / out.nZvoxels;
     geometry.vox_sz = [spec_vox_size_x, spec_vox_size_y, spec_vox_size_z];
 
     geometry.si_pos.ap = header.si_ap_off_center; % FOV offset in AP direction [mm]
