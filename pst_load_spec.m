@@ -1,4 +1,4 @@
-function spec_struct = pst_load_spec(spec, water, ref_file, is_sv, Manufacturer)
+function spec_struct = pst_load_spec(spec, water, ref_file, is_sv, is_3d, Manufacturer)
     
     % this function calls the modified loadspec function from FID-A package
     % depending on the vendor. In addition, it saves the geo
@@ -41,10 +41,13 @@ function spec_struct = pst_load_spec(spec, water, ref_file, is_sv, Manufacturer)
     
     % rename vendor to Manufacturer
     spec_struct.Manufacturer = Manufacturer;
-    spec_struct.is_sv = is_sv;
     if isfield(spec_struct,'vendor')
         spec_struct = rmfield(spec_struct,'vendor');
     end
+
+    % same into struct:
+    spec_struct.is_sv = is_sv;
+    spec_struct.is_3d = is_3d;
 
     % is it a volume selection technique?
     disp("Checking if it is a volume selection MRSI technique in pst_load_spec (line 36)");
@@ -65,7 +68,6 @@ function spec_struct = pst_load_spec(spec, water, ref_file, is_sv, Manufacturer)
     % This current spec processing path here
     spec_struct.spec_processing_path = [spec_struct.spec_path filesep 'processing_' spec_struct.spec_name];
 
-    
     if ~isempty(water)
         if isequal(Manufacturer, 'Philips')
             spec_struct.water_struct = pst_loadspec_sdat(water, 1);
@@ -89,12 +91,12 @@ function spec_struct = pst_load_spec(spec, water, ref_file, is_sv, Manufacturer)
 
     factor = spec_struct.geometry.vox_sz ./ old_ref_vox;
 
-    to_bring_to = ceil(factor);
+    to_bring_to = ceil(factor); % how many image pixels will be there in one MRS voxel
 
     new_ref_vox = spec_struct.geometry.vox_sz ./ to_bring_to;
+
     new_dim = ref_nii.dim .* old_ref_vox ./ new_ref_vox;
-    new_dim = round(new_dim);
-    % new_dim = ceil(new_dim ./ to_bring_to) .* to_bring_to; % otherwise e.g. ceil(150*1/1) = 151 which we don't want
+    new_dim = round(new_dim); % more or less correct now. Shall be adjusted.
     
     newM = ref_nii.mat; % use old matrix
     
@@ -102,7 +104,7 @@ function spec_struct = pst_load_spec(spec, water, ref_file, is_sv, Manufacturer)
         newM(1:3,i) = ref_nii.mat(1:3,i) / old_ref_vox(i) * new_ref_vox(i); % adjust elements
     end
     
-    % Preserve the center of the original image
+    % keep the center point 
     old_center = ref_nii.mat * [(ref_nii.dim(:)+1)/2; 1];
     new_center = newM * [(new_dim(:)+1)/2; 1];
     
@@ -121,8 +123,7 @@ function spec_struct = pst_load_spec(spec, water, ref_file, is_sv, Manufacturer)
     spm_write_vol(Vref, zeros(new_dim));
 
     % write resliced image into new ref
-    Vorig = ref_nii;
-    
+
     flags = struct('mask', false, ...
         'mean', false, ...
         'interp', 1, ...
@@ -135,7 +136,7 @@ function spec_struct = pst_load_spec(spec, water, ref_file, is_sv, Manufacturer)
     if ~exist([ref_path filesep 'resliced'],'dir')
         mkdir([ref_path filesep 'resliced'])
     end
-    spm_reslice_cmd = "spm_reslice([Vref; Vorig], flags);";
+    spm_reslice_cmd = "spm_reslice([Vref; ref_nii], flags);";
 
     evalc(spm_reslice_cmd);
     delete(new_ref_file)

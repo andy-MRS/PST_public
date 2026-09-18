@@ -718,7 +718,7 @@ function load_data(~, ~)
     end
 
     
-    spec_struct = pst_load_spec(spec_file, water_file, loaded_ref_file, is_sv, Manufacturer);
+    spec_struct = pst_load_spec(spec_file, water_file, loaded_ref_file, is_sv, is_3d, Manufacturer);
     
     ref_file = spec_struct.ref_file;
 

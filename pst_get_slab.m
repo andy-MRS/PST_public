@@ -102,7 +102,7 @@ function [spec_struct, quantitative_slabs_only_VOI] = pst_get_slab(spec_struct, 
         % It's possible to switch it off in the Settings tab of the interface, setting do_PSF_blurring = False.
         
         if do_PSF_blurring
-            blurred_VOI_img = PSF_blurring(VOI_img, [spec_struct.nAcqXvoxels spec_struct.nAcqYvoxels]);
+            blurred_VOI_img = PSF_blurring(VOI_img, [spec_struct.nAcqXvoxels spec_struct.nAcqYvoxels], spec_struct);
         else
             blurred_VOI_img = VOI_img;
         end
@@ -117,31 +117,40 @@ function [spec_struct, quantitative_slabs_only_VOI] = pst_get_slab(spec_struct, 
 
 end
 
-function out_img = PSF_blurring(in_img, window)
+function out_img = PSF_blurring(in_img, window, spec_struct)
 
-    % for Philips, this function undersamples the k-space of the image.
-    % TODO 1: take elliptical weighting into account
-    % TODO 2: add Hamming filter for Siemens (if it's ON in MRSI)
-    
-    in_2d = mean(in_img, 3);
-    F = fftshift(fft2(in_2d));
-    
-    % target central low-frequency window
-    center = floor(size(F)/2) + 1;
-    half = floor(window/2);
-    
-    % build mask same size as F
-    mask = zeros(size(F));
-    r = (center(1)-half(1)):(center(1)+half(1)-1);
-    c = (center(2)-half(2)):(center(2)+half(2)-1);
-    mask(r, c) = 1;
-    
-    % apply mask
-    F_masked = F .* mask;
-    
-    % inverse fft
-    out_2d = ifft2(ifftshift(F_masked));
+    if ~spec_struct.is_3d
 
-    % replicate for all slices
-    out_img = repmat(out_2d, [1, 1, size(in_img, 3)]);
+        % for Philips, this function undersamples the k-space of the image.
+        % TODO 1: take elliptical weighting into account
+        % TODO 2: add Hamming filter for Siemens (if it's ON in MRSI)
+        
+        in_2d = mean(in_img, 3);
+        F = fftshift(fft2(in_2d));
+        
+        % target central low-frequency window
+        center = floor(size(F)/2) + 1;
+        half = floor(window/2);
+        
+        % build mask same size as F
+        mask = zeros(size(F));
+        r = (center(1)-half(1)):(center(1)+half(1)-1);
+        c = (center(2)-half(2)):(center(2)+half(2)-1);
+        mask(r, c) = 1;
+        
+        % apply mask
+        F_masked = F .* mask;
+        
+        % inverse fft
+        out_2d = ifft2(ifftshift(F_masked));
+    
+        % replicate for all slices
+        out_img = repmat(out_2d, [1, 1, size(in_img, 3)]);
+
+    else
+
+        disp('For 3D, PSF currection is currently not implemented')
+        out_img = in_img;
+
+    end
 end

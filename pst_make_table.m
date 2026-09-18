@@ -85,11 +85,7 @@ function pst_make_table(spec_struct, table_file, lcmodel_processed, segmentation
                             current_title = lcm_fields{d};
                             if ismember(current_title, lcmodel_new_fields)
                                 current_value = spec_struct.voxel_results.lcmodel.(voxi_j_k).(lcm_fields{d});
-                                if rem(d,2) == 1 
-                                    fprintf(fid, '%.15g;', current_value);
-                                else
-                                    fprintf(fid, '%1.0f;', current_value);
-                                end
+                                fprintf(fid, '%.15g;', current_value);
                             end
                         end
                         fprintf(fid, '%s;', sel_names_struct.(voxi_j_k));
