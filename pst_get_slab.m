@@ -102,7 +102,7 @@ function [spec_struct, quantitative_slabs_only_VOI] = pst_get_slab(spec_struct, 
         % It's possible to switch it off in the Settings tab of the interface, setting do_PSF_blurring = False.
         
         if do_PSF_blurring
-            blurred_VOI_img = PSF_blurring(VOI_img, [spec_struct.nAcqXvoxels spec_struct.nAcqYvoxels], spec_struct);
+            blurred_VOI_img = PSF_blurring(VOI_img, [spec_struct.nAcqXvoxels spec_struct.nAcqYvoxels spec_struct.nAcqZvoxels], spec_struct);
         else
             blurred_VOI_img = VOI_img;
         end
@@ -149,8 +149,31 @@ function out_img = PSF_blurring(in_img, window, spec_struct)
 
     else
 
-        disp('For 3D, PSF currection is currently not implemented')
-        out_img = in_img;
+        % for Philips, this function undersamples the k-space of the image.
+        % TODO 1: take elliptical weighting into account
+        % TODO 2: add Hamming filter for Siemens (if it's ON in MRSI)
+
+        F = fftshift(fftn(in_img));
+
+        % target central low-frequency window
+        center = floor(size(F)/2) + 1;
+        half = floor(window/2);
+
+        % build mask same size as F
+        mask = zeros(size(F));
+        r = (center(1)-half(1)):(center(1)+half(1)-1);
+        c = (center(2)-half(2)):(center(2)+half(2)-1);
+        s = (center(3)-half(3)):(center(3)+half(3)-1);
+        mask(r, c, s) = 1;
+
+        % apply mask
+        F_masked = F .* mask;
+
+        % inverse fft
+        out_img = ifftn(ifftshift(F_masked));
+
+        % disp('For 3D, PSF correction is currently not implemented')
+        % out_img = in_img;
 
     end
 end

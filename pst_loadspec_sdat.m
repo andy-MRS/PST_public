@@ -192,6 +192,7 @@ if isfield(header, 'phase_encoding_fov')
     answer = inputdlg(prompt, dlgtitle, window_size, definput);
     out.nAcqXvoxels = str2double(answer{1});
     out.nAcqYvoxels = str2double(answer{2});
+    out.nAcqZvoxels = out.nZvoxels;
     out.PE_FoV = header.phase_encoding_fov;
     out.flags.MultiVoxel=1;
     
