@@ -192,27 +192,48 @@ if isfield(header, 'phase_encoding_fov')
     out.PE_FoV = header.phase_encoding_fov;
     out.flags.MultiVoxel=1;
     
-    % this now addresses only the Tra orientation of MRSI. Other orientations to be addressed later
-    % Find FOV geometry                         
+   if isequal(header.phase_encoding_direction, "trans")
+        geometry.si_size.lr = header.phase_encoding_fov;
+        % Find MRSI voxel size
+        spec_vox_size_x = geometry.si_size.lr/out.nXvoxels;
+        % in Philips, interpolated vox_size in x and y directions are equal:
+        spec_vox_size_y = spec_vox_size_x;
+    
+        geometry.si_size.ap = spec_vox_size_y * out.nYvoxels;
+        geometry.si_size.cc = header.slice_thickness;
+    
+        spec_vox_size_z = geometry.size.cc;
+        geometry.vox_sz = [spec_vox_size_x, spec_vox_size_y, spec_vox_size_z];
+    
+        geometry.si_pos.ap = header.si_ap_off_center; % FOV offset in AP direction [mm]
+        geometry.si_pos.lr = header.si_lr_off_center; % FOV offset in LR direction [mm]
+        geometry.si_pos.cc = header.si_cc_off_center; % FOV offset in CC direction [mm]
+        geometry.si_rot.ap = header.si_ap_off_angulation; % FOV angulation around AP axis [deg]
+        geometry.si_rot.lr = header.si_lr_off_angulation; % FOV angulation around LR axis [deg]
+        geometry.si_rot.cc = header.si_cc_off_angulation; % FOV angulation around CC axis [deg]
+   else
+       if isequal(header.phase_encoding_direction, "cor")
+           geometry.si_size.lr = header.phase_encoding_fov;
+           % Find MRSI voxel size
+           spec_vox_size_x = geometry.si_size.lr/out.nXvoxels;
+           % in Philips, interpolated vox_size in x and z directions are equal:
+           spec_vox_size_z = spec_vox_size_x;
 
-    geometry.si_size.lr = header.phase_encoding_fov;
-    % Find MRSI voxel size
-    spec_vox_size_x = geometry.si_size.lr/out.nXvoxels;
-    % in Philips, interpolated vox_size in x and y directions are equal:
-    spec_vox_size_y = spec_vox_size_x;
+           geometry.si_size.cc = spec_vox_size_z * out.nZvoxels;
+           geometry.si_size.ap = header.slice_thickness;
 
-    geometry.si_size.ap = spec_vox_size_y * out.nYvoxels;
-    geometry.si_size.cc = header.slice_thickness;
+           spec_vox_size_y = geometry.size.cc;
+           geometry.vox_sz = [spec_vox_size_x, spec_vox_size_y, spec_vox_size_z];
 
-    spec_vox_size_z = geometry.size.cc;
-    geometry.vox_sz = [spec_vox_size_x, spec_vox_size_y, spec_vox_size_z];
+           geometry.si_pos.ap = header.si_ap_off_center; % FOV offset in AP direction [mm]
+           geometry.si_pos.lr = header.si_lr_off_center; % FOV offset in LR direction [mm]
+           geometry.si_pos.cc = header.si_cc_off_center; % FOV offset in CC direction [mm]
+           geometry.si_rot.ap = header.si_ap_off_angulation; % FOV angulation around AP axis [deg]
+           geometry.si_rot.lr = header.si_lr_off_angulation; % FOV angulation around LR axis [deg]
+           geometry.si_rot.cc = header.si_cc_off_angulation; % FOV angulation around CC axis [deg]          
+       end
 
-    geometry.si_pos.ap = header.si_ap_off_center; % FOV offset in AP direction [mm]
-    geometry.si_pos.lr = header.si_lr_off_center; % FOV offset in LR direction [mm]
-    geometry.si_pos.cc = header.si_cc_off_center; % FOV offset in CC direction [mm]
-    geometry.si_rot.ap = header.si_ap_off_angulation; % FOV angulation around AP axis [deg]
-    geometry.si_rot.lr = header.si_lr_off_angulation; % FOV angulation around LR axis [deg]
-    geometry.si_rot.cc = header.si_cc_off_angulation; % FOV angulation around CC axis [deg]
+
 
 end
 
