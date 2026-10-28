@@ -232,7 +232,7 @@ if isfield(header, 'phase_encoding_fov')
            geometry.si_rot.lr = header.si_lr_off_angulation; % FOV angulation around LR axis [deg]
            geometry.si_rot.cc = header.si_cc_off_angulation; % FOV angulation around CC axis [deg]          
        end
-
+   end
 
 
 end
