@@ -2597,17 +2597,17 @@ end
 
 function draw_FOV(geometry)
     
-    hr2 = rectangle('Parent', hAxes, 'Position', [0.5 0.5 floor(geometry.FOV_size(1)/geometry.ref_vox_sz(1))+0.5 floor(geometry.FOV_size(2)/geometry.ref_vox_sz(2))+0.5], 'LineWidth', 0.5, 'EdgeColor', 'y');
+    hr2 = rectangle('Parent', hAxes, 'Position', [0.5 0.5 floor(geometry.FOV_size(1)/geometry.ref_vox_sz(1)) floor(geometry.FOV_size(2)/geometry.ref_vox_sz(2))], 'LineWidth', 1, 'EdgeColor', 'y');
     
     if lcm_spec
         set(hr2, 'ButtonDownFcn', @mouse_click);
     end
     for j = 1:spec_struct.nXvoxels-1
-        x = (0.5+geometry.vox_sz(1)*j)/geometry.ref_vox_sz(1);
+        x = (geometry.vox_sz(1)*j)/geometry.ref_vox_sz(1);
         line(hAxes, [x x], [0 (geometry.FOV_size(2))/geometry.ref_vox_sz(2)], 'Color', [0.3059 0.5804 0.2941]);
     end
     for i = 1:spec_struct.nYvoxels-1
-        y = (0.5+geometry.vox_sz(2)*i)/geometry.ref_vox_sz(2);
+        y = (geometry.vox_sz(2)*i)/geometry.ref_vox_sz(2);
         line(hAxes, [0 geometry.FOV_size(1)/geometry.ref_vox_sz(1)], [y y], 'Color', [0.3059 0.5804 0.2941]);
     end
     
