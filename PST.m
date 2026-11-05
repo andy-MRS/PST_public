@@ -746,11 +746,11 @@ function load_data(~, ~)
     setGroupVisibility(hVIS, 'on');
     setGroupVisibility(hINDIVOX, 'on');
 
-    if isempty(resliced_quantitative_files)
-        set(hProcSel_btn, 'Enable', 'off');
-    else
+    % if isempty(resliced_quantitative_files)
+        % set(hProcSel_btn, 'Enable', 'off');
+    % else
         set(hProcSel_btn, 'Enable', 'on');
-    end
+    % end
 
     % reasign the array of delta ppmshifts if it was already input once
     if isequal(get(hPpmShiftEdit, 'Visible'), 'on')
@@ -1488,8 +1488,12 @@ function select_voxels(~,~)
     else
         selection_name = default_name;
     end
+    
+    % depending whether coronal or not, selection is made differently
+    y_index = spec_struct.geometry.y_index;
 
-    sel_z = idx * spec_struct.geometry.ref_vox_sz(3)/spec_struct.geometry.vox_sz(3);
+    slice_dim = spec_struct.geometry.slice_dim;
+    sel_z = idx * spec_struct.geometry.ref_vox_sz(slice_dim)/spec_struct.geometry.vox_sz(slice_dim);
     sel_z_spec = 1;
     
     [~, rect] = imcrop(hAxes);
@@ -1500,9 +1504,9 @@ function select_voxels(~,~)
         sel_x2_spec_prev = sel_x2_spec;
         sel_y2_spec_prev = sel_y2_spec;
         sel_x1_spec = ceil(rect(1)*spec_struct.geometry.ref_vox_sz(1)/spec_struct.geometry.vox_sz(1)) ;
-        sel_y1_spec = ceil(rect(2)*spec_struct.geometry.ref_vox_sz(2)/spec_struct.geometry.vox_sz(2)) ;
+        sel_y1_spec = ceil(rect(2)*spec_struct.geometry.ref_vox_sz(y_index)/spec_struct.geometry.vox_sz(y_index)) ;
         sel_x2_spec = ceil((rect(1)+rect(3))*spec_struct.geometry.ref_vox_sz(1)/spec_struct.geometry.vox_sz(1)) ; 
-        sel_y2_spec = ceil((rect(2)+rect(4))*spec_struct.geometry.ref_vox_sz(2)/spec_struct.geometry.vox_sz(2)) ;
+        sel_y2_spec = ceil((rect(2)+rect(4))*spec_struct.geometry.ref_vox_sz(y_index)/spec_struct.geometry.vox_sz(y_index)) ;
             
         fprintf('%s\n\n', 'The following matrix indicates your current voxel selection(s):'); 
         cur_sel(sel_y1_spec:sel_y2_spec, sel_x1_spec:sel_x2_spec, sel_z_spec) = sel_nr;
@@ -1978,6 +1982,8 @@ function process_composition(~, ~)
             param_tmp = false(N_sel_vox,1);
             vox_ids{i} = cell(N_sel_vox,1);
             
+            y_index = spec_struct.geometry.y_index;
+            
             fprintf('\nDelta chemical shift = %.2f ppm:\n', ppmShifts_with_0(i))
             reverseStr = '';
             for k = 1:N_sel_vox
@@ -1986,26 +1992,30 @@ function process_composition(~, ~)
                 reverseStr = repmat(sprintf('\b'), 1, numel(msg));
                 
                 % find ranges where the current MRSI voxel belongs
-                sel_lr_edge1 = spec_struct.nXvoxels - ij(k, 1);
-                sel_lr_edge2 = spec_struct.nXvoxels - ij(k, 1) + 1;
-                sel_ap_edge1 = ij(k, 2) - 1;
-                sel_ap_edge2 = ij(k, 2);
+                sel_x_edge1 = spec_struct.nXvoxels - ij(k, 1);
+                sel_x_edge2 = spec_struct.nXvoxels - ij(k, 1) + 1;
+                sel_y_edge1 = ij(k, 2) - 1;
+                sel_y_edge2 = ij(k, 2);
 
-                local_ap_edge1 = round(sel_ap_edge1 * spec_struct.geometry.vox_sz(2) / spec_struct.geometry.ref_vox_sz(2));
-                local_ap_edge2 = round(sel_ap_edge2 * spec_struct.geometry.vox_sz(2) / spec_struct.geometry.ref_vox_sz(2));
-                local_lr_edge1 = round(sel_lr_edge1 * spec_struct.geometry.vox_sz(1) / spec_struct.geometry.ref_vox_sz(1));
-                local_lr_edge2 = round(sel_lr_edge2 * spec_struct.geometry.vox_sz(1) / spec_struct.geometry.ref_vox_sz(1));       
+                local_x_edge1 = round(sel_x_edge1 * spec_struct.geometry.vox_sz(1) / spec_struct.geometry.ref_vox_sz(1));
+                local_x_edge2 = round(sel_x_edge2 * spec_struct.geometry.vox_sz(1) / spec_struct.geometry.ref_vox_sz(1));    
+                local_y_edge1 = round(sel_y_edge1 * spec_struct.geometry.vox_sz(y_index) / spec_struct.geometry.ref_vox_sz(y_index));
+                local_y_edge2 = round(sel_y_edge2 * spec_struct.geometry.vox_sz(y_index) / spec_struct.geometry.ref_vox_sz(y_index));
 
                 % create the mask of the individual MRSI voxel
                 mask = zeros(size(img));
-                mask(local_lr_edge1:local_lr_edge2, local_ap_edge1:local_ap_edge2, :) = 1;
+                if ~spec_struct.geometry.cor
+                    mask(local_x_edge1:local_x_edge2, local_y_edge1:local_y_edge2, :) = 1;
+                else
+                    mask(local_x_edge1:local_x_edge2, :, local_y_edge1:local_y_edge2) = 1;
+                end
                 curr_mask = vol_curr_shift_image_slab;
                 
                 % unify the voxel mask name with LCModel name. 
                 % Remember that in LCModel we have row-col and not col-row:
                 % e.g. LCModel 17-27 voxel is 27-17.
                 % BUT at the make_table stage LCModel 17-27 will also turn into 27-17.
-                vox_ids{i}{k} = [spec_struct.nXvoxels-sel_lr_edge1 spec_struct.nYvoxels-sel_ap_edge1];
+                vox_ids{i}{k} = [spec_struct.nXvoxels-sel_x_edge1 spec_struct.nYvoxels-sel_y_edge1];
 
                 curr_mask.fname = fullfile(outdir, sprintf('%d_%d.nii', vox_ids{i}{k}(1), vox_ids{i}{k}(2)));
                 spm_write_vol(curr_mask, mask);
@@ -2214,7 +2224,11 @@ function prepare_visual(delta_ppm)
         evalc(spm_imcalc_cmd);
         current_orange_vol = spm_vol(current_orange_filename);
         current_orange = spm_read_vols(current_orange_vol);
-        current_structure.orange = permute(current_orange, [2 1 3]);
+        if ~spec_struct.geometry.cor
+            current_structure.orange = permute(current_orange, [2 1 3]);
+        else
+            current_structure.orange = permute(current_orange, [3 1 2]);
+        end
         delete(current_orange_filename);
     
         % find the intersection of the shifted mask and the planscan image, save it as White 
@@ -2224,23 +2238,37 @@ function prepare_visual(delta_ppm)
         evalc(spm_imcalc_cmd);
         current_white_vol = spm_vol(current_white_filename);
         current_white = spm_read_vols(current_white_vol);
-        current_structure.white = permute(current_white, [2 1 3]);
+        if ~spec_struct.geometry.cor
+            current_structure.white = permute(current_white, [2 1 3]);
+        else
+            current_structure.white = permute(current_white, [3 1 2]);
+        end
         delete(current_white_filename);
     end
 
     slices_idx = 1;
-    for i = 1:size(current_structure.image, 3)
-        imgi = current_structure.image(:,:,i);
+    if ~spec_struct.geometry.cor
+        spec_struct.geometry.slice_dim = 3;
+    else
+        spec_struct.geometry.slice_dim = 2;
+    end
+    for i = 1:size(current_structure.image, spec_struct.geometry.slice_dim)
+        if ~spec_struct.geometry.cor
+            imgi = current_structure.image(:,:,i);
+        else
+            imgi = current_structure.image(:,i,:);
+            imgi = permute(imgi,[1,3,2]);
+        end
         imgi = imgi';
         current_structure.img_gr(:,:,slices_idx) = imgi;
         slices_idx = slices_idx + 1;
     end
+
  
     spec_struct.(['shifted_' shift_val_str]) = current_structure;
 
     [~,~,d3] = size(current_structure.img_gr);
     max_val = d3;
-    
     if ~is_sv
         idx = floor(d3/2) + 1;
     else
@@ -2249,12 +2277,13 @@ function prepare_visual(delta_ppm)
     end
 
     sl_value = idx;
-
     if max_val > 1
         set(hSliceSlider, 'Min', 1, 'Max', max_val, 'SliderStep', [1/(max_val-1) 1/(max_val-1)], 'Value', sl_value, 'Visible', 'on');
     else
         set(hSliceSlider, 'Visible', 'off');
     end
+
+
 end
 
 function visual_out(delta_ppm)
@@ -2596,19 +2625,30 @@ function [ij, region] = read_sel_file(sel_file)
 end
 
 function draw_FOV(geometry)
-    
-    hr2 = rectangle('Parent', hAxes, 'Position', [0.5 0.5 floor(geometry.FOV_size(1)/geometry.ref_vox_sz(1))+0.5 floor(geometry.FOV_size(2)/geometry.ref_vox_sz(2))+0.5], 'LineWidth', 0.5, 'EdgeColor', 'y');
+
+    % depending whether coronal or not, FOV should be plotted differently
+    x_index = 1;
+    spec_struct.geometry.x_index = 1;
+    if ~geometry.cor
+        y_index = 2;
+        spec_struct.geometry.y_index = 2;
+    else
+        y_index = 3; 
+        spec_struct.geometry.y_index = 3;
+    end
+
+    hr2 = rectangle('Parent', hAxes, 'Position', [0.5 0.5 floor(geometry.FOV_size(x_index)/geometry.ref_vox_sz(x_index))+0.5 floor(geometry.FOV_size(y_index)/geometry.ref_vox_sz(y_index))+0.5], 'LineWidth', 0.5, 'EdgeColor', 'y');
     
     if lcm_spec
         set(hr2, 'ButtonDownFcn', @mouse_click);
     end
     for j = 1:spec_struct.nXvoxels-1
-        x = (0.5+geometry.vox_sz(1)*j)/geometry.ref_vox_sz(1);
-        line(hAxes, [x x], [0 (geometry.FOV_size(2))/geometry.ref_vox_sz(2)], 'Color', [0.3059 0.5804 0.2941]);
+        x = (0.5+geometry.vox_sz(x_index)*j)/geometry.ref_vox_sz(x_index);
+        line(hAxes, [x x], [0 (geometry.FOV_size(y_index))/geometry.ref_vox_sz(y_index)], 'Color', [0.3059 0.5804 0.2941]);
     end
     for i = 1:spec_struct.nYvoxels-1
-        y = (0.5+geometry.vox_sz(2)*i)/geometry.ref_vox_sz(2);
-        line(hAxes, [0 geometry.FOV_size(1)/geometry.ref_vox_sz(1)], [y y], 'Color', [0.3059 0.5804 0.2941]);
+        y = (0.5+geometry.vox_sz(y_index)*i)/geometry.ref_vox_sz(y_index);
+        line(hAxes, [0 geometry.FOV_size(x_index)/geometry.ref_vox_sz(x_index)], [y y], 'Color', [0.3059 0.5804 0.2941]);
     end
     
     if lcm_spec
@@ -2664,14 +2704,15 @@ function draw_selection(geometry)
         0.0, 0.75, 0.75;  % Bright Teal
         ];
     
+    y_index = spec_struct.geometry.y_index;
     if ~isempty(cur_sel)
         for i = 1:spec_struct.nXvoxels
             for j = 1:spec_struct.nYvoxels
                 if cur_sel(j,i) > 0
                     color = colors(cur_sel(j,i), :);
                     x_start = (i-1) * geometry.vox_sz(1)/geometry.ref_vox_sz(1);
-                    y_start = (j-1) * geometry.vox_sz(2)/geometry.ref_vox_sz(2);
-                    rectangle('Parent', hAxes, 'Position', [x_start+0.5 y_start+0.5 geometry.vox_sz(1)/geometry.ref_vox_sz(1) geometry.vox_sz(2)/geometry.ref_vox_sz(2)], 'LineWidth', 0.1, 'EdgeColor', color);
+                    y_start = (j-1) * geometry.vox_sz(y_index)/geometry.ref_vox_sz(y_index);
+                    rectangle('Parent', hAxes, 'Position', [x_start+0.5 y_start+0.5 geometry.vox_sz(1)/geometry.ref_vox_sz(1) geometry.vox_sz(y_index)/geometry.ref_vox_sz(y_index)], 'LineWidth', 0.1, 'EdgeColor', color);
                 end
             end
         end
@@ -2720,7 +2761,7 @@ function enable_buttons
         set(hLCM_btn, 'String', 'LCModel', 'Enable', 'on')
     end
     
-    if isequal(get(hProcSel_btn, 'Visible'), 'on') && ~isempty(resliced_quantitative_files)
+    if isequal(get(hProcSel_btn, 'Visible'), 'on')
         set(hProcSel_btn, 'String', 'Process composition', 'Enable', 'on')
     end
 
