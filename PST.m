@@ -2640,23 +2640,34 @@ function [ijk, region] = read_sel_file(sel_file)
 end
 
 function draw_FOV(geometry)
+
+    % depending whether coronal or not, FOV should be plotted differently
+    x_index = 1;
+    spec_struct.geometry.x_index = 1;
+    % if ~geometry.coronal_orientation
+        y_index = 2;
+        spec_struct.geometry.y_index = 2;
+    % % else
+    % %     y_index = 3; 
+    % %     spec_struct.geometry.y_index = 3;
+    % % end
     
-    hr2 = rectangle('Parent', hAxes, 'Position', [0.5 0.5 ceil(geometry.FOV_size(1)/geometry.ref_vox_sz(1)) - 0.5 ceil(geometry.FOV_size(2)/geometry.ref_vox_sz(2)) - 0.5], 'LineWidth', 0.3, 'EdgeColor', 'y');
+    hr2 = rectangle('Parent', hAxes, 'Position', [0.5 0.5 floor(geometry.FOV_size(x_index)/geometry.ref_vox_sz(x_index))+0.5 floor(geometry.FOV_size(y_index)/geometry.ref_vox_sz(y_index))+0.5], 'LineWidth', 0.5, 'EdgeColor', 'y');
     
     if lcm_spec
         set(hr2, 'ButtonDownFcn', @mouse_click);
     end
-    for j = 1:spec_struct.nXvoxels - 1
-        x = (geometry.vox_sz(1)*j)/geometry.ref_vox_sz(1);
-        line(hAxes, [x x], [0.5 (geometry.FOV_size(2))/geometry.ref_vox_sz(2) + 0.5], 'Color', [0.3059 0.5804 0.2941]);
+    for j = 1:spec_struct.nXvoxels-1
+        x = (0.5+geometry.vox_sz(x_index)*j)/geometry.ref_vox_sz(x_index);
+        line(hAxes, [x x], [0 (geometry.FOV_size(y_index))/geometry.ref_vox_sz(y_index)], 'Color', [0.3059 0.5804 0.2941]);
     end
-    for i = 1:spec_struct.nYvoxels - 1
-        y = (geometry.vox_sz(2)*i)/geometry.ref_vox_sz(2);
-        line(hAxes, [0.5 geometry.FOV_size(1)/geometry.ref_vox_sz(1) + 0.5], [y y], 'Color', [0.3059 0.5804 0.2941]);
+    for i = 1:spec_struct.nYvoxels-1
+        y = (0.5+geometry.vox_sz(y_index)*i)/geometry.ref_vox_sz(y_index);
+        line(hAxes, [0 geometry.FOV_size(x_index)/geometry.ref_vox_sz(x_index)], [y y], 'Color', [0.3059 0.5804 0.2941]);
     end
     
     if lcm_spec
-       set([hAxes; get(hAxes, 'Children')], 'ButtonDownFcn', @mouse_click);
+        set([hAxes; get(hAxes, 'Children')], 'ButtonDownFcn', @mouse_click);
     end
 
 end
