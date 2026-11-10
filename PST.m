@@ -2004,7 +2004,7 @@ function process_composition(~, ~)
 
                 % create the mask of the individual MRSI voxel
                 mask = zeros(size(img));
-                if ~spec_struct.geometry.cor
+                if ~spec_struct.geometry.coronal_orientation
                     mask(local_x_edge1:local_x_edge2, local_y_edge1:local_y_edge2, :) = 1;
                 else
                     mask(local_x_edge1:local_x_edge2, :, local_y_edge1:local_y_edge2) = 1;
@@ -2224,7 +2224,7 @@ function prepare_visual(delta_ppm)
         evalc(spm_imcalc_cmd);
         current_orange_vol = spm_vol(current_orange_filename);
         current_orange = spm_read_vols(current_orange_vol);
-        if ~spec_struct.geometry.cor
+        if ~spec_struct.geometry.coronal_orientation
             current_structure.orange = permute(current_orange, [2 1 3]);
         else
             current_structure.orange = permute(current_orange, [3 1 2]);
@@ -2238,7 +2238,7 @@ function prepare_visual(delta_ppm)
         evalc(spm_imcalc_cmd);
         current_white_vol = spm_vol(current_white_filename);
         current_white = spm_read_vols(current_white_vol);
-        if ~spec_struct.geometry.cor
+        if ~spec_struct.geometry.coronal_orientation
             current_structure.white = permute(current_white, [2 1 3]);
         else
             current_structure.white = permute(current_white, [3 1 2]);
@@ -2247,13 +2247,13 @@ function prepare_visual(delta_ppm)
     end
 
     slices_idx = 1;
-    if ~spec_struct.geometry.cor
+    if ~spec_struct.geometry.coronal_orientation
         spec_struct.geometry.slice_dim = 3;
     else
         spec_struct.geometry.slice_dim = 2;
     end
     for i = 1:size(current_structure.image, spec_struct.geometry.slice_dim)
-        if ~spec_struct.geometry.cor
+        if ~spec_struct.geometry.coronal_orientation
             imgi = current_structure.image(:,:,i);
         else
             imgi = current_structure.image(:,i,:);
@@ -2333,16 +2333,19 @@ function mouse_click(~, ~)
     
     % find the corresponding ps-file
     if ~is_sv
-
         % calculate the corresponding spectroscopic voxel
-        ylimit = ylim(hAxes);
-        totalY = ylimit(2) - ylimit(1);
-
-        xlimit = xlim(hAxes);
-        totalX = xlimit(2) - xlimit(1);
-        cur_x_spec = ceil((totalX - cur_x)*spec_struct.geometry.ref_vox_sz(1)/spec_struct.geometry.vox_sz(1));
-        cur_y_spec = ceil((totalY - cur_y)*spec_struct.geometry.ref_vox_sz(2)/spec_struct.geometry.vox_sz(2));
-        file_ptrn = sprintf('%s%d%s%d%s', '*_', cur_y_spec, '-', cur_x_spec, '.pdf');
+            ylimit = ylim(hAxes);
+            totalY = ylimit(2) - ylimit(1);
+    
+            xlimit = xlim(hAxes);
+            totalX = xlimit(2) - xlimit(1);
+            cur_x_spec = ceil((totalX - cur_x)*spec_struct.geometry.ref_vox_sz(1)/spec_struct.geometry.vox_sz(1));
+            if ~spec_struct.geometry.coronal_orientation
+                cur_y_spec = ceil((totalY - cur_y)*spec_struct.geometry.ref_vox_sz(2)/spec_struct.geometry.vox_sz(2));
+            else
+                cur_y_spec = ceil((totalY - cur_y)*spec_struct.geometry.ref_vox_sz(3)/spec_struct.geometry.vox_sz(3));
+            end
+            file_ptrn = sprintf('%s%d%s%d%s', '*_', cur_y_spec, '-', cur_x_spec, '.pdf');
     else
         file_ptrn = sprintf('%s%s%s', 'SV_', '*', '.pdf');
     end
@@ -2629,7 +2632,7 @@ function draw_FOV(geometry)
     % depending whether coronal or not, FOV should be plotted differently
     x_index = 1;
     spec_struct.geometry.x_index = 1;
-    if ~geometry.cor
+    if ~geometry.coronal_orientation
         y_index = 2;
         spec_struct.geometry.y_index = 2;
     else

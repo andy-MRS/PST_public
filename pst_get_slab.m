@@ -102,7 +102,7 @@ function [spec_struct, quantitative_slabs_only_VOI] = pst_get_slab(spec_struct, 
         % It's possible to switch it off in the Settings tab of the interface, setting do_PSF_blurring = False.
         
         if do_PSF_blurring
-            blurred_VOI_img = PSF_blurring(VOI_img, [spec_struct.nAcqXvoxels spec_struct.nAcqYvoxels]);
+            blurred_VOI_img = PSF_blurring(VOI_img, [spec_struct.nAcqXvoxels spec_struct.nAcqYvoxels], spec_struct.geometry.coronal_orientation);
         else
             blurred_VOI_img = VOI_img;
         end
@@ -117,13 +117,19 @@ function [spec_struct, quantitative_slabs_only_VOI] = pst_get_slab(spec_struct, 
 
 end
 
-function out_img = PSF_blurring(in_img, window)
+function out_img = PSF_blurring(in_img, window, coronal_orientation)
 
     % for Philips, this function undersamples the k-space of the image.
     % TODO 1: take elliptical weighting into account
     % TODO 2: add Hamming filter for Siemens (if it's ON in MRSI)
     
-    in_2d = mean(in_img, 3);
+    if ~coronal_orientation
+        in_2d = mean(in_img, 3);
+    else
+        in_2d = mean(in_img, 2);
+        in_2d = permute(in_2d, [1 3 2]);
+    end
+
     F = fftshift(fft2(in_2d));
     
     % target central low-frequency window
@@ -143,5 +149,10 @@ function out_img = PSF_blurring(in_img, window)
     out_2d = ifft2(ifftshift(F_masked));
 
     % replicate for all slices
-    out_img = repmat(out_2d, [1, 1, size(in_img, 3)]);
+    if ~coronal_orientation
+        out_img = repmat(out_2d, [1, 1, size(in_img, 3)]);
+    else
+        out_img = repmat(out_2d, [1, 1, size(in_img, 2)]);
+        out_img = permute(out_img, [1, 3, 2]);
+    end
 end

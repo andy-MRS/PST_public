@@ -193,18 +193,18 @@ if isfield(header, 'phase_encoding_fov')
     out.flags.MultiVoxel=1;
     
     if header.ap_size < header.cc_size
-        cor = 1;
+        coronal_orientation = 1;
         disp("Assuming coronal orientation because AP < CC")
-        geometry.cor = 1;
+        geometry.coronal_orientation = 1;
     else
-        cor = 0;
-        geometry.cor = 0;
+        coronal_orientation = 0;
+        geometry.coronal_orientation = 0;
     end
 
     geometry.si_size.lr = header.phase_encoding_fov;
     % Find MRSI voxel size
     spec_vox_size_x = geometry.si_size.lr/out.nXvoxels;
-    if ~cor
+    if ~coronal_orientation
         % in Philips, interpolated vox_size in x and y directions are equal:
         spec_vox_size_y = spec_vox_size_x;
     
