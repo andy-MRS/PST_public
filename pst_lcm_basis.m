@@ -13,6 +13,8 @@ save_def = false;
 
 %  Initialize and hide the GUI as it is being constructed
 hf = figure('Visible', 'off', 'Position', [500 450 300 300], 'Name', 'LCModel Basis Files', 'MenuBar', 'none', 'NumberTitle', 'off');
+
+
 defaultBackground = get(0, 'defaultUicontrolBackgroundColor');
 set(hf, 'Color', defaultBackground);
 
@@ -41,6 +43,7 @@ movegui(hf, 'center');
 % Make the GUI visible
 set(hf, 'Visible', 'on');
 uicontrol(hbasis_cell);
+uiwait(hf);
 
 %  Callbacks for LCM_BASIS
 function basislist_callback(hObject, ~)
@@ -94,10 +97,14 @@ function OK_callback(~, ~)
             save(lcm_def_file, '-struct', 'def_data', '-append');
         end
     end
+    uiresume(hf);
+
     close;
 end
 
 function cancel_callback(~, ~)
+
+    uiresume(hf);
     close;
 end
 
