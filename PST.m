@@ -2363,7 +2363,7 @@ function mouse_click(~, ~)
         totalX = xlimit(2) - xlimit(1);
         cur_x_spec = ceil((totalX - cur_x)*spec_struct.geometry.ref_vox_sz(1)/spec_struct.geometry.vox_sz(1));
         cur_y_spec = ceil((totalY - cur_y)*spec_struct.geometry.ref_vox_sz(2)/spec_struct.geometry.vox_sz(2));
-        file_ptrn = sprintf('%s%d%s%d%s%d%s', '*_', cur_y_spec, '-', cur_x_spec, '-', islice, '*.pdf');
+        file_ptrn = sprintf('%s%d%s%d%s%d%s', '*_sl', islice, '_', cur_y_spec, '-', cur_x_spec, '.pdf');
     else
         file_ptrn = sprintf('%s%s%s', 'SV_', '*', '.pdf');
     end
@@ -2382,9 +2382,9 @@ function mouse_click(~, ~)
                 mkdir([spec_struct.spec_processing_path filesep 'lcm' filesep 'lcm_png']);
             end
             if ~is_sv
-                output_pattern = fullfile(spec_struct.spec_processing_path, 'lcm', 'lcm_png', sprintf('%d_%d_%d', cur_y_spec, cur_x_spec, islice), [pdf_name '_page%02d.png']);
-                if ~isfolder([spec_struct.spec_processing_path filesep 'lcm' filesep 'lcm_png' filesep sprintf('%d_%d_%d', cur_y_spec, cur_x_spec, islice)])
-                    mkdir([spec_struct.spec_processing_path filesep 'lcm' filesep 'lcm_png' filesep sprintf('%d_%d_%d', cur_y_spec, cur_x_spec, islice)]);
+                output_pattern = fullfile(spec_struct.spec_processing_path, 'lcm', 'lcm_png', sprintf('%s%d_%d_%d', 'sl', islice, cur_y_spec, cur_x_spec), [pdf_name '_page%02d.png'] );
+                if ~isfolder( [ spec_struct.spec_processing_path filesep 'lcm' filesep 'lcm_png' filesep sprintf('%s%d_%d_%d', 'sl', islice, cur_y_spec, cur_x_spec) ] )
+                    mkdir( [ spec_struct.spec_processing_path filesep 'lcm' filesep 'lcm_png' filesep sprintf('%s%d_%d_%d', 'sl', islice, cur_y_spec, cur_x_spec) ] );
                 end
             else
                 output_pattern = fullfile(spec_struct.spec_processing_path, 'lcm', 'lcm_png', [pdf_name '_page%02d.png']);
@@ -2400,7 +2400,7 @@ function mouse_click(~, ~)
                 return
             end
             if ~is_sv
-                folder = fullfile(spec_struct.spec_processing_path, 'lcm', 'lcm_png', sprintf('%d_%d_%d', cur_y_spec, cur_x_spec, islice));
+                folder = fullfile( spec_struct.spec_processing_path, 'lcm', 'lcm_png', sprintf('%s%d_%d_%d', 'sl', islice, cur_y_spec, cur_x_spec ) );
             else
                 folder = fullfile(spec_struct.spec_processing_path, 'lcm', 'lcm_png');
             end
@@ -2419,10 +2419,10 @@ function mouse_click(~, ~)
         if ~is_sv
             if ~exist('hMarker','var') || isempty(hMarker) || ~isgraphics(hMarker)
                 hold(hAxes,'on')
-                hMarker = line(hAxes, cur_x, cur_y,'Marker','x', 'Color','g', 'LineStyle','none', 'LineWidth', 1, 'MarkerSize', 6, 'HitTest','off', 'PickableParts','none');
+                hMarker = line(hAxes, cur_x, cur_y, 'Marker', 'x', 'Color', 'g', 'LineStyle', 'none', 'LineWidth', 1, 'MarkerSize', 6, 'HitTest', 'off', 'PickableParts', 'none');
                 hold(hAxes,'off')
             else
-                hMarker2 = line(hAxes, cur_x, cur_y,'Marker','x', 'Color','g', 'LineStyle','none', 'LineWidth', 1, 'MarkerSize', 6, 'HitTest','off', 'PickableParts','none');
+                hMarker2 = line(hAxes, cur_x, cur_y, 'Marker', 'x', 'Color', 'g', 'LineStyle', 'none', 'LineWidth', 1, 'MarkerSize', 6, 'HitTest', 'off', 'PickableParts', 'none');
                 set(hMarker, 'Color', 'y');
                 hMarker = hMarker2;
             end
@@ -2431,7 +2431,7 @@ function mouse_click(~, ~)
     else
         set(anno_scroll_PS, 'Visible', 'Off')
         set(anno_noLCModel, 'Visible', 'On')
-        line(hAxes, cur_x, cur_y,'Marker','x', 'Color','r', 'LineStyle','none', 'LineWidth', 1, 'MarkerSize', 6, 'HitTest','off', 'PickableParts','none');
+        line(hAxes, cur_x, cur_y, 'Marker', 'x', 'Color', 'r', 'LineStyle', 'none', 'LineWidth', 1, 'MarkerSize', 6, 'HitTest', 'off', 'PickableParts', 'none');
     end
     
     

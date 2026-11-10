@@ -28,7 +28,7 @@ function spec_struct = pst_combine_lcm_tables(spec_struct, ijk)
         lcm_j = spec_struct.nYvoxels - j + 1;
         lcm_k = k;
         for q = 1:size(lcm_contents, 1)
-            if contains(lcm_contents(q).name, [num2str(lcm_j) '-' num2str(lcm_i) '-' num2str(lcm_k) '.table'])
+            if contains(lcm_contents(q).name, ['sl' num2str(lcm_k) '_' num2str(lcm_j) '-' num2str(lcm_i) '.table'])
                 selected_files{ind} = lcm_contents(q).name;
             end
         end
@@ -37,7 +37,7 @@ function spec_struct = pst_combine_lcm_tables(spec_struct, ijk)
     for m = 1:numel(selected_files)
         try 
             dataStruct = local_io_readlcmtab(selected_files{m}); % brilliant solution.
-            spec_struct.voxel_results.lcmodel.(['vox' num2str(dataStruct.col) '_' num2str(dataStruct.row) '_' num2str(dataStruct.sli)]) = dataStruct; % save the file content to spec_struct
+            spec_struct.voxel_results.lcmodel.(['vox' num2str(dataStruct.sli) '_' num2str(dataStruct.col) '_' num2str(dataStruct.row)]) = dataStruct; % save the file content to spec_struct
         catch
             fprintf('%s\n', 'ERROR: Could not read the LCModel result .table file!')
             row_col_sli = regexp(selected_files(m),'\d*-\d*-\d*','match');

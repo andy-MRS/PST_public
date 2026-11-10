@@ -10,12 +10,12 @@ end
 col_str = num2str(icolst);
 row_str = num2str(irowst);
 sli_str = num2str(islice);
-ps_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '-' sli_str '.ps']);
-table_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '-' sli_str '.table']);
-csv_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '-' sli_str '.csv']);
-print_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '-' sli_str '.print']);
-coord_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_' row_str '-' col_str '-' sli_str '.coord']);
-ctrl_name = fullfile(spec_struct.spec_processing_path, 'lcm', [name '_' row_str '-' col_str '-' sli_str '.control']);
+csv_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_sl' sli_str '_' row_str '-' col_str '.csv']);
+print_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_sl' sli_str '_' row_str '-' col_str '.print']);
+coord_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '_sl' sli_str '_' row_str '-' col_str '.coord']);
+ctrl_name = fullfile(spec_struct.spec_processing_path, 'lcm', [name '_sl' sli_str '_' row_str '-' col_str '.control']);
+ps_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '.ps']);
+table_name = fullfile(spec_struct.spec_processing_path, 'lcm', [new_name '.table']);
 hzpppm = spec_struct.txfrq/10^6;
 nunfil = spec_struct.samples;
 t_dwell = 1/spec_struct.spectralwidth;
@@ -38,7 +38,8 @@ fid = fopen(ctrl_name, 'w');
 data = load(lcm_data_file);
 lcm_str = sprintf(' %s\n', '$LCMODL');
 
-title_tmp = [select_name ' row ' row_str ' col ' col_str ' slice ' sli_str];
+% title_tmp = [select_name ' row ' row_str ' col ' col_str ' slice ' sli_str];
+title_tmp = select_name;
 title = sprintf(' %s''%s''\n', 'title = ', title_tmp);
 if ispc
     filbas_str = sprintf(' %s''%s''\n', 'filbas = ', basis_set);
@@ -170,8 +171,7 @@ if isfield(data, 'omit_list')
         it = omit_list.iterator; 
         i = 1;
         while it.hasNext
-            chomit_str = sprintf(' %s%d%s''%s''\n', 'chomit(', i, ') = ', ...
-                it.next);
+            chomit_str = sprintf(' %s%d%s''%s''\n', 'chomit(', i, ') = ', it.next);
             fwrite(fid, chomit_str, 'char');
             i = i + 1;
         end
