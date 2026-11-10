@@ -2652,7 +2652,7 @@ function draw_FOV(geometry)
     % %     spec_struct.geometry.y_index = 3;
     % % end
     
-    hr2 = rectangle('Parent', hAxes, 'Position', [0.5 0.5 floor(geometry.FOV_size(x_index)/geometry.ref_vox_sz(x_index))+0.5 floor(geometry.FOV_size(y_index)/geometry.ref_vox_sz(y_index))+0.5], 'LineWidth', 0.5, 'EdgeColor', 'y');
+    hr2 = rectangle('Parent', hAxes, 'Position', [0.5 0.5 floor(geometry.FOV_size(x_index)/geometry.ref_vox_sz(x_index))+0.5 floor(geometry.FOV_size(y_index)/geometry.ref_vox_sz(y_index))+0.5], 'LineWidth', 1, 'EdgeColor', 'y');
     
     if lcm_spec
         set(hr2, 'ButtonDownFcn', @mouse_click);
@@ -2726,7 +2726,7 @@ function draw_selection(geometry)
                     color = colors(cur_sel(j,i,islice), :);
                     x_start = (i-1) * geometry.vox_sz(1)/geometry.ref_vox_sz(1);
                     y_start = (j-1) * geometry.vox_sz(2)/geometry.ref_vox_sz(2);
-                    rectangle('Parent', hAxes, 'Position', [x_start y_start geometry.vox_sz(1)/geometry.ref_vox_sz(1) geometry.vox_sz(2)/geometry.ref_vox_sz(2)], 'LineWidth', 0.1, 'EdgeColor', color);
+                    rectangle('Parent', hAxes, 'Position', [x_start+0.5 y_start+0.5 geometry.vox_sz(1)/geometry.ref_vox_sz(1) geometry.vox_sz(2)/geometry.ref_vox_sz(2)], 'LineWidth', 0.1, 'EdgeColor', color);
                 end
             end
         end
