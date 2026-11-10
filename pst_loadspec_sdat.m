@@ -230,8 +230,10 @@ if isfield(header, 'phase_encoding_fov')
         geometry.si_rot.ap = header.si_ap_off_angulation; % FOV angulation around AP axis [deg]
         geometry.si_rot.lr = header.si_lr_off_angulation; % FOV angulation around LR axis [deg]
         geometry.si_rot.cc = header.si_cc_off_angulation; % FOV angulation around CC axis [deg]
-    
-        
+
+else
+    disp("In PST, orientation of the SV does not play a role. Setting geometry.coronal_orientation = 0 in pst_loadspec_sdat, line 235")
+    geometry.coronal_orientation = 0;
 
 end
 

@@ -268,6 +268,7 @@ function [out] = pst_loadspec_rda(filename)
                 Phase(2)	=  Norm(3)*sqrt(1/(Norm(2)*Norm(2)+Norm(3)*Norm(3)));
                 Phase(3)	= -Norm(2)*sqrt(1/(Norm(2)*Norm(2)+Norm(3)*Norm(3)));
                 VoxDims = [geometry.size.VoI_PeFOV geometry.size.VoI_RoFOV geometry.size.VoIThickness];
+                geometry.coronal_orientation = false;
             case 'c'
                 % For coronal voxel orientation, the phase reference vector lies in
                 % the transversal plane
@@ -275,6 +276,7 @@ function [out] = pst_loadspec_rda(filename)
                 Phase(2)	= -Norm(1)*sqrt(1/(Norm(1)*Norm(1)+Norm(2)*Norm(2)));
                 Phase(3)	= 0;
                 VoxDims = [geometry.size.VoI_PeFOV geometry.size.VoI_RoFOV geometry.size.VoIThickness];
+                geometry.coronal_orientation = true;
             case 's'
                 % For sagittal voxel orientation, the phase reference vector lies in
                 % the transversal plane
@@ -282,6 +284,8 @@ function [out] = pst_loadspec_rda(filename)
                 Phase(2)	=  Norm(1)*sqrt(1/(Norm(1)*Norm(1)+Norm(2)*Norm(2)));
                 Phase(3)	= 0;
                 VoxDims = [geometry.size.VoI_PeFOV geometry.size.VoI_RoFOV geometry.size.VoIThickness];
+                geometry.coronal_orientation = false;
+
         end
         PhaseRot = rda.SlabOrientation(2,:)';          
         % swapped signs because VoI_InPlaneRot rotates counterclockwise
@@ -311,6 +315,10 @@ function [out] = pst_loadspec_rda(filename)
         geometry.si_pos.PosSag         = geometry.pos.PosSag;    % Sagittal coordinate of voxel [mm]
         geometry.si_pos.PosCor         = geometry.pos.PosCor;    % Coronal coordinate of voxel [mm]
         geometry.si_pos.PosTra         = geometry.pos.PosTra;    % Transversal coordinate of voxel [mm]
+        
+        disp('pst_loadspec_rda, line 318')
+        disp('Setting geometry.coronal_orientation = false for Siemens data. Currently, coronal orientation is addressed for Philips data only')
+        geometry.coronal_orientation = false;
 
         % matrix size
         out.nXvoxels = rda.CSIMatrix_Size(1);
