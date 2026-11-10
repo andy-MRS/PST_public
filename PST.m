@@ -1824,8 +1824,11 @@ function process_lcmodel(~, ~)
             sel_names{1} = 'SV';
             sel_names_struct.('vox1_1_1') = 'SV';
         end
-
-        basis_set = data.basis_set;
+        
+        if ~isfield(data, "basis_set")
+            lcm_basis;
+        end
+           basis_set = data.basis_set;
 
         if ispc
             % Windows part starts here
