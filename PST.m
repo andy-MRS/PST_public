@@ -1798,9 +1798,10 @@ function process_lcmodel(~, ~)
             sel_names_struct.('vox1_1') = 'SV';
         end
         
-        if ~isfield(data,"basis_set")
-            lcm_basis;
+        if ~isfield(data, "basis_set")
+            lcm_basis([], []);
         end
+        data = load(lcm_data_file);
         basis_set = data.basis_set;
 
         if ispc
