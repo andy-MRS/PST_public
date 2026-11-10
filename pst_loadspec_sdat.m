@@ -216,8 +216,8 @@ if isfield(header, 'phase_encoding_fov')
         % in Philips, interpolated vox_size in x and z directions are equal:
         spec_vox_size_z = spec_vox_size_x;
 
-        geometry.si_size.ap = geometry.size.ap;
-        geometry.si_size.cc = header.slice_thickness;
+        geometry.si_size.ap = header.slice_thickness;
+        geometry.si_size.cc = spec_vox_size_z * out.nYvoxels;
 
         spec_vox_size_y = geometry.size.ap;
     end
