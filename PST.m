@@ -46,10 +46,10 @@ sel_y2_spec_prev = 0;
 analyze_segm = false;
 analyze_param = false;
 analyze_param = false;
-degzer = 164;
-sddegz = 10;
+degzer = 0;
+sddegz = 5;
 degppm = 0;
-sddegp = 1;
+sddegp = 5;
 dkntmn = 0.15;
 neach = 99;
 nsimul = 13;
@@ -1826,9 +1826,10 @@ function process_lcmodel(~, ~)
         end
         
         if ~isfield(data, "basis_set")
-            lcm_basis;
+            lcm_basis([], []);
         end
-           basis_set = data.basis_set;
+        data = load(lcm_data_file);
+        basis_set = data.basis_set;
 
         if ispc
             % Windows part starts here
@@ -2362,7 +2363,7 @@ function mouse_click(~, ~)
         totalX = xlimit(2) - xlimit(1);
         cur_x_spec = ceil((totalX - cur_x)*spec_struct.geometry.ref_vox_sz(1)/spec_struct.geometry.vox_sz(1));
         cur_y_spec = ceil((totalY - cur_y)*spec_struct.geometry.ref_vox_sz(2)/spec_struct.geometry.vox_sz(2));
-        file_ptrn = sprintf('%s%d%s%d%s%d%s', '*_', cur_y_spec, '-', cur_x_spec, '-', islice, '.pdf');
+        file_ptrn = sprintf('%s%d%s%d%s%d%s', '*_', cur_y_spec, '-', cur_x_spec, '-', islice, '*.pdf');
     else
         file_ptrn = sprintf('%s%s%s', 'SV_', '*', '.pdf');
     end
